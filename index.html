@@ -2,48 +2,81 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>방치형 게임 골드 강화 수식 검증기</title>
+    <title>방치형 게임 레벨별 수식 검증기</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 1300px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #2c3e50; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background-color: #3498db; color: white; }
-        input[type="text"] { width: 90%; padding: 8px; box-sizing: border-box; text-align: right; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        /* 탭 메뉴 스타일 */
+        .stat-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 15px; }
+        .tab-btn { padding: 10px 15px; border: none; background: #ecf0f1; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        .tab-btn.active { background: #3498db; color: white; }
+
+        .info-box { margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 6px; border-left: 5px solid #3498db; font-size: 14px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #34495e; color: white; font-size: 14px; }
+        input[type="text"] { width: 92%; padding: 8px; box-sizing: border-box; text-align: right; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
         input[type="text"]:focus { border-color: #3498db; outline: none; }
-        .stat-name { font-weight: bold; text-align: left; background-color: #ecf0f1; }
-        .analysis-result { font-size: 13px; color: #e74c3c; font-weight: bold; }
-        .info-box { margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 6px; border-left: 5px solid #3498db; }
+        
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
+        .action-btn { padding: 10px 20px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .action-btn:hover { background: #27ae60; }
+        .del-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .del-btn:hover { background: #c0392b; }
+
+        .analysis-box { margin-top: 25px; background: #fff8e1; padding: 15px; border-radius: 6px; border-left: 5px solid #f39c12; }
+        .analysis-box h3 { margin-top: 0; color: #d35400; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>⚔️ 방치형 게임 골드 강화 데이터 및 산식 검증</h1>
+    <h1>📊 방치형 게임 레벨별 데이터 및 수식 분석기</h1>
+    
     <div class="info-box">
-        <strong>사용 안내:</strong> 각 항목의 현재 <strong>수치</strong>와 <strong>+1 / +10 / +100 강화 비용</strong>을 입력하세요. 숫자를 입력하면 자동으로 천 단위 콤마가 적용되며, 비용 간의 규칙성을 분석합니다.
+        <strong>사용 방법:</strong> 
+        1. 상단에서 분석할 <strong>강화 항목</strong>을 선택하세요.<br>
+        2. <strong>[레벨 데이터 추가]</strong> 버튼을 눌러 각 레벨별 수치와 비용(+1, +10, +100)을 입력합니다.<br>
+        3. 레벨이 쌓일수록 비용이 증가하는 규칙성(배율)을 하단에서 확인할 수 있습니다.
     </div>
 
+    <!-- 스탯 선택 탭 -->
+    <div class="stat-tabs" id="statTabs"></div>
+
+    <h2 id="currentStatTitle" style="color: #2980b9; margin-bottom: 5px;">공격력 레벨 데이터</h2>
+    
     <table>
         <thead>
             <tr>
-                <th>강화 항목</th>
-                <th>현재 수치</th>
-                <th>+1 강화 비용</th>
-                <th>+10 강화 비용</th>
-                <th>+100 강화 비용</th>
-                <th>규칙성 분석 (비율)</th>
+                <th style="width: 12%;">레벨 (Level)</th>
+                <th style="width: 20%;">해당 레벨 수치</th>
+                <th style="width: 18%;">+1 강화 비용</th>
+                <th style="width: 18%;">+10 강화 비용</th>
+                <th style="width: 18%;">+100 강화 비용</th>
+                <th style="width: 14%;">관리</th>
             </tr>
         </thead>
-        <tbody id="statTableBody">
+        <tbody id="levelTableBody">
             <!-- 자바스크립트로 동적 생성 -->
         </tbody>
     </table>
+
+    <div class="btn-group">
+        <button class="action-btn" onclick="addRow()">+ 레벨 데이터 추가</button>
+    </div>
+
+    <!-- 규칙성 분석 영역 -->
+    <div class="analysis-box">
+        <h3>🔍 수식 및 규칙성 분석 결과</h3>
+        <div id="analysisContent">데이터를 2개 이상 입력하면 레벨 간 비용 증가율(배율)을 분석합니다.</div>
+    </div>
 </div>
 
 <script>
-    // 정의된 8가지 강화 항목 (이름과 최대 범위 안내용)
+    // 8가지 강화 항목 정의
     const stats = [
         { id: 'atk', name: '공격력', max: '30만' },
         { id: 'hp', name: '생명력', max: '30만' },
@@ -55,68 +88,136 @@
         { id: 'ult_dmg', name: '궁극치명타데미지', max: '1만' }
     ];
 
-    const tbody = document.getElementById('statTableBody');
+    let currentStatId = 'atk';
+    // 스탯별 레벨 데이터 저장소 (메모리 상 유지)
+    let db = {};
+    stats.forEach(s => db[s.id] = []);
 
-    // 테이블 행 생성
-    stats.forEach(stat => {
-        let tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td class="stat-name">${stat.name} <br><span style="font-size:11px; color:#7f8c8d;">(범위: 0~${stat.max})</span></td>
-            <td><input type="text" id="${stat.id}_val" placeholder="수치 입력" oninput="formatAndAnalyze('${stat.id}')"></td>
-            <td><input type="text" id="${stat.id}_c1" placeholder="+1 비용" oninput="formatAndAnalyze('${stat.id}')"></td>
-            <td><input type="text" id="${stat.id}_c10" placeholder="+10 비용" oninput="formatAndAnalyze('${stat.id}')"></td>
-            <td><input type="text" id="${stat.id}_c100" placeholder="+100 비용" oninput="formatAndAnalyze('${stat.id}')"></td>
-            <td><span id="${stat.id}_result" class="analysis-result">데이터 입력 대기 중</span></td>
-        `;
-        tbody.appendChild(tr);
-    });
+    // 초기 샘플 데이터 2개 기본 세팅 (테스트용)
+    db['atk'] = [
+        { level: '1', val: '10', c1: '100', c10: '1,100', c100: '15,000' },
+        { level: '2', val: '12', c1: '120', c10: '1,320', c100: '18,000' }
+    ];
 
-    // 숫자 콤마 포맷팅 및 간단 규칙성 분석 함수
-    function formatAndAnalyze(prefix) {
-        // 각 입력 필드 가져오기
-        ['val', 'c1', 'c10', 'c100'].forEach(type => {
-            let input = document.getElementById(`${prefix}_${type}`);
-            let cleanVal = input.value.replace(/[^0-9]/g, '');
-            if (cleanVal) {
-                input.value = Number(cleanVal).toLocaleString();
-            } else {
-                input.value = '';
-            }
+    // 탭 생성
+    function initTabs() {
+        const tabsContainer = document.getElementById('statTabs');
+        stats.forEach(s => {
+            let btn = document.createElement('button');
+            btn.className = `tab-btn ${s.id === currentStatId ? 'active' : ''}`;
+            btn.innerText = s.name;
+            btn.onclick = () => switchStat(s.id, s.name);
+            tabsContainer.appendChild(btn);
+        });
+    }
+
+    function switchStat(id, name) {
+        currentStatId = id;
+        document.getElementById('currentStatTitle').innerText = `${name} 레벨 데이터 (최대 범위: 0~${stats.find(s=>s.id===id).max})`;
+        
+        // 탭 active 상태 변경
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.toggle('active', b.innerText === name);
+        });
+        renderTable();
+    }
+
+    // 테이블 렌더링
+    function renderTable() {
+        const tbody = document.getElementById('levelTableBody');
+        tbody.innerHTML = '';
+        
+        let rows = db[currentStatId];
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color:#7f8c8d; padding:20px;">등록된 레벨 데이터가 없습니다. 아래 버튼을 눌러 추가하세요.</td></tr>`;
+            document.getElementById('analysisContent').innerHTML = '데이터가 부족합니다.';
+            return;
+        }
+
+        rows.forEach((row, index) => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" value="${row.level}" placeholder="예: 1" oninput="updateData(${index}, 'level', this.value)"></td>
+                <td><input type="text" value="${row.val}" placeholder="수치" oninput="formatAndSave(this, ${index}, 'val')"></td>
+                <td><input type="text" value="${row.c1}" placeholder="+1 비용" oninput="formatAndSave(this, ${index}, 'c1')"></td>
+                <td><input type="text" value="${row.c10}" placeholder="+10 비용" oninput="formatAndSave(this, ${index}, 'c10')"></td>
+                <td><input type="text" value="${row.c100}" placeholder="+100 비용" oninput="formatAndSave(this, ${index}, 'c100')"></td>
+                <td><button class="del-btn" onclick="deleteRow(${index})">삭제</button></td>
+            `;
+            tbody.appendChild(tr);
         });
 
-        // 분석 로직 수행
-        let c1 = Number(document.getElementById(`${prefix}_c1`).value.replace(/[^0-9]/g, ''));
-        let c10 = Number(document.getElementById(`${prefix}_c10`).value.replace(/[^0-9]/g, ''));
-        let c100 = Number(document.getElementById(`${prefix}_c100`).value.replace(/[^0-9]/g, ''));
-        let resultSpan = document.getElementById(`${prefix}_result`);
+        analyzeData();
+    }
 
-        let analysisText = [];
+    // 행 추가
+    function addRow() {
+        db[currentStatId].push({ level: '', val: '', c1: '', c10: '', c100: '' });
+        renderTable();
+    }
 
-        if (c1 > 0 && c10 > 0) {
-            let ratio10 = (c10 / (c1 * 10)).toFixed(2);
-            analysisText.stats = `+10배율: ${ratio10}x`;
-            
-            // 만약 +10 비용이 (+1비용 * 10)보다 크면 지수(등비) 형태일 가능성 높음
-            if (ratio10 > 1.05) {
-                analysisText.push(`+10비용이 단순합보다 큼 (지수증가 추정)`);
-            } else {
-                analysisText.push(`선형 증가 추정`);
+    // 행 삭제
+    function deleteRow(index) {
+        db[currentStatId].splice(index, 1);
+        renderTable();
+    }
+
+    // 데이터 업데이트 및 천단위 콤마 적용
+    function formatAndSave(input, index, field) {
+        let cleanVal = input.value.replace(/[^0-9]/g, '');
+        if (cleanVal) {
+            input.value = Number(cleanVal).toLocaleString();
+            db[currentStatId][index][field] = input.value;
+        } else {
+            input.value = '';
+            db[currentStatId][index][field] = '';
+        }
+        analyzeData();
+    }
+
+    function updateData(index, field, value) {
+        db[currentStatId][index][field] = value;
+        analyzeData();
+    }
+
+    // 수식 및 규칙성 분석 로직
+    function analyzeData() {
+        let rows = db[currentStatId].filter(r => r.level !== '' && r.c1 !== '');
+        // 레벨순 정렬 시도
+        rows.sort((a, b) => Number(a.level) - Number(b.level));
+
+        let analysisDiv = document.getElementById('analysisContent');
+        if (rows.length < 2) {
+            analysisDiv.innerHTML = '규칙성을 분석하려면 <strong>최소 2개 이상</strong>의 레벨 데이터를 입력해주세요.';
+            return;
+        }
+
+        let html = '<ul>';
+        for (let i = 1; i < rows.length; i++) {
+            let prev = rows[i-1];
+            let curr = rows[i];
+
+            let pLevel = Number(prev.level);
+            let cLevel = Number(curr.level);
+            let levelDiff = cLevel - pLevel;
+
+            let pCost = Number(prev.c1.replace(/[^0-9]/g, ''));
+            let cCost = Number(curr.c1.replace(/[^0-9]/g, ''));
+
+            if (pCost > 0 && cCost > 0 && levelDiff > 0) {
+                let totalRatio = (cCost / pCost).toFixed(2);
+                let perLevelRatio = Math.pow(cCost / pCost, 1 / levelDiff).toFixed(3);
+                
+                html += `<li><strong>Lv.${pLevel} → Lv.${cLevel}</strong> (+${levelDiff}레벨 구간): 비용이 <strong>${totalRatio}배</strong> 증가 (레벨당 약 <strong>${perLevelRatio}배</strong> 복리/지수 증가 추정)</li>`;
             }
         }
-
-        if (c10 > 0 && c100 > 0) {
-            let ratio100 = (c100 / c10).toFixed(2);
-            analysisText.push(`10배 구간비율: ${ratio100}x`);
-        }
-
-        if (analysisText.length > 0) {
-            resultSpan.innerHTML = analysisText.join('<br>');
-            resultSpan.style.color = '#27ae60';
-        } else {
-            resultSpan.innerHTML = '데이터 부족';
-            resultSpan.style.color = '#e74c3c';
-        }
+        html += '</ul>';
+        analysisDiv.innerHTML = html;
     }
+
+    // 초기 실행
+    initTabs();
+    renderTable();
 </script>
 
 </body>
