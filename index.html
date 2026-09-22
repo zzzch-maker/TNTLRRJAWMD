@@ -16,12 +16,18 @@
         .info-box { margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 6px; border-left: 5px solid #3498db; font-size: 14px; }
         
         /* 최상단 고정 입력 카드 스타일 */
-        .input-card { background: #f8f9fa; border: 2px solid #3498db; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+        .input-card { background: #f8f9fa; border: 2px solid #3498db; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .input-card h3 { margin-top: 0; color: #2980b9; margin-bottom: 15px; font-size: 16px; }
         .form-grid { display: grid; grid-template-columns: repeat(5, 1fr) 120px; gap: 10px; align-items: end; }
         .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #555; }
         .form-group input { width: 100%; padding: 9px; box-sizing: border-box; text-align: right; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
         .form-group input:focus { border-color: #3498db; outline: none; box-shadow: 0 0 5px rgba(52, 152, 219, 0.4); }
+
+        /* 입력칸 바로 아래 배치되는 검증 및 계산식 분석 박스 */
+        .verification-box { background: #fffde7; border: 2px solid #fbc02d; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+        .verification-box h3 { margin-top: 0; color: #f57f17; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .formula-display { background: #fff; padding: 12px; border: 1px dashed #fbc02d; border-radius: 4px; font-family: monospace; font-size: 16px; color: #d32f2f; font-weight: bold; margin: 10px 0; text-align: center; }
+        .verify-details { font-size: 13px; color: #555; line-height: 1.5; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
@@ -31,20 +37,18 @@
         .action-btn:hover { background: #27ae60; }
         .del-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
         .del-btn:hover { background: #c0392b; }
-
-        .analysis-box { margin-top: 25px; background: #fff8e1; padding: 15px; border-radius: 6px; border-left: 5px solid #f39c12; }
-        .analysis-box h3 { margin-top: 0; color: #d35400; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📊 방치형 게임 레벨별 데이터 및 수식 분석기</h1>
+    <h1>📊 방치형 게임 레벨별 데이터 및 수식 검증기</h1>
     
     <div class="info-box">
         <strong>사용 방법:</strong> 
         1. 상단에서 분석할 <strong>강화 항목</strong>을 선택하세요.<br>
-        2. 최상단 입력 폼에 값을 채운 뒤 **Enter 키**를 누르거나 **[추가 및 정렬]** 버튼을 누르면 자동 저장 및 정렬되며, 커서가 다시 레벨 입력칸으로 이동합니다.
+        2. 최상단 입력 폼에 값을 채우고 **Enter 키** 또는 **[추가 및 정렬]**을 누르면 레벨 순으로 정렬됩니다.<br>
+        3. 아래의 **수식 및 규칙성 검증 결과** 박스에서 입력된 데이터를 기반으로 검증된 계산식을 확인할 수 있습니다.
     </div>
 
     <!-- 스탯 선택 탭 -->
@@ -80,6 +84,14 @@
         </div>
     </div>
 
+    <!-- ★ 데이터 입력칸 바로 아래에 배치된 규칙성 및 계산식 검증 결과 박스 -->
+    <div class="verification-box">
+        <h3>🔍 입력 데이터 기반 수식 및 규칙성 검증 결과</h3>
+        <div id="formulaContainer">
+            <div style="color: #888; font-style: italic;">규칙성을 검증하려면 비용 데이터가 포함된 레벨 데이터를 2개 이상 입력해주세요.</div>
+        </div>
+    </div>
+
     <h2 id="currentStatTitle" style="color: #2980b9; margin-bottom: 5px; font-size: 18px;">공격력 등록된 데이터 리스트</h2>
     
     <table>
@@ -97,16 +109,9 @@
             <!-- 자바스크립트로 동적 생성 -->
         </tbody>
     </table>
-
-    <!-- 규칙성 분석 영역 -->
-    <div class="analysis-box">
-        <h3>🔍 수식 및 규칙성 분석 결과</h3>
-        <div id="analysisContent">데이터를 2개 이상 입력하면 레벨 간 비용 증가율(배율)을 분석합니다.</div>
-    </div>
 </div>
 
 <script>
-    // 8가지 강화 항목 정의
     const stats = [
         { id: 'atk', name: '공격력', max: '30만' },
         { id: 'hp', name: '생명력', max: '30만' },
@@ -122,13 +127,13 @@
     let db = {};
     stats.forEach(s => db[s.id] = []);
 
-    // 초기 샘플 데이터 세팅 (테스트용)
+    // 초기 샘플 테스트 데이터
     db['atk'] = [
         { level: '1', val: '10', c1: '100', c10: '1,100', c100: '15,000' },
-        { level: '5', val: '50', c1: '500', c10: '5,500', c100: '75,000' }
+        { level: '2', val: '12', c1: '120', c10: '1,320', c100: '18,000' },
+        { level: '5', val: '20', c1: '172', c10: '1,890', c100: '25,800' }
     ];
 
-    // 탭 생성
     function initTabs() {
         const tabsContainer = document.getElementById('statTabs');
         stats.forEach(s => {
@@ -153,15 +158,13 @@
         renderTable();
     }
 
-    // 엔터키 감지 핸들러
     function handleEnter(event) {
         if (event.key === 'Enter') {
-            event.preventDefault(); // 기본 폼 제출 동작 방지
+            event.preventDefault();
             addNewData();
         }
     }
 
-    // 숫자 입력 시 실시간 콤마 포맷팅
     function formatNumberOnly(input) {
         let cleanVal = input.value.replace(/[^0-9]/g, '');
         if (cleanVal) {
@@ -171,7 +174,6 @@
         }
     }
 
-    // 최상단 입력창 데이터 추가 및 자동 정렬 + 포커스 이동
     function addNewData() {
         let levelInput = document.getElementById('inputLevel');
         let valInput = document.getElementById('inputVal');
@@ -205,14 +207,13 @@
 
         db[currentStatId].push(newData);
 
-        // 레벨 기준 오름차순 자동 정렬
+        // 레벨 오름차순 자동 정렬
         db[currentStatId].sort((a, b) => {
             let lA = Number(a.level.replace(/[^0-9]/g, ''));
             let lB = Number(b.level.replace(/[^0-9]/g, ''));
             return lA - lB;
         });
 
-        // 입력창 초기화 및 레벨 칸으로 포커스 이동
         clearInputs();
         renderTable();
         levelInput.focus(); 
@@ -226,14 +227,12 @@
         document.getElementById('inputC100').value = '';
     }
 
-    // 행 삭제
     function deleteRow(index) {
         db[currentStatId].splice(index, 1);
         renderTable();
         document.getElementById('inputLevel').focus();
     }
 
-    // 테이블 렌더링
     function renderTable() {
         const tbody = document.getElementById('levelTableBody');
         tbody.innerHTML = '';
@@ -241,7 +240,7 @@
         let rows = db[currentStatId];
         if (rows.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" style="color:#7f8c8d; padding:20px;">등록된 레벨 데이터가 없습니다. 상단 폼을 통해 추가해주세요.</td></tr>`;
-            document.getElementById('analysisContent').innerHTML = '데이터가 부족합니다.';
+            document.getElementById('formulaContainer').innerHTML = `<div style="color: #888; font-style: italic;">규칙성을 검증하려면 비용 데이터가 포함된 레벨 데이터를 2개 이상 입력해주세요.</div>`;
             return;
         }
 
@@ -258,40 +257,81 @@
             tbody.appendChild(tr);
         });
 
-        analyzeData();
+        // 입력된 데이터를 기반으로 엄격한 검증 및 수식 도출 실행
+        verifyAndDeriveFormula(rows);
     }
 
-    // 수식 및 규칙성 분석 로직
-    function analyzeData() {
-        let rows = db[currentStatId];
+    // ★ 입력된 데이터를 기반으로 규칙성 검증 및 계산식 유추 함수
+    function verifyAndDeriveFormula(rows) {
         let validRows = rows.map(r => ({
             level: Number(r.level.replace(/[^0-9]/g, '')),
             c1: Number(r.c1.replace(/[^0-9]/g, ''))
-        })).filter(r => r.c1 > 0);
+        })).filter(r => !isNaN(r.level) && r.c1 > 0);
 
         validRows.sort((a, b) => a.level - b.level);
 
-        let analysisDiv = document.getElementById('analysisContent');
+        let container = document.getElementById('formulaContainer');
+
         if (validRows.length < 2) {
-            analysisDiv.innerHTML = '규칙성을 분석하려면 비용 데이터가 포함된 레벨 데이터를 <strong>2개 이상</strong> 입력해주세요.';
+            container.innerHTML = `<div style="color: #e65100; font-weight: bold;">⚠️ 데이터 부족: 수식을 검증하고 규칙성을 유추하려면 최소 2개 이상의 유효한 강화 비용 데이터가 필요합니다.</div>`;
             return;
         }
 
-        let html = '<ul>';
+        // 구간별 레벨 당 증가율(배율) 및 증가량 산출
+        let ratios = [];
+        let diffs = [];
+        let detailsHtml = '<ul>';
+
         for (let i = 1; i < validRows.length; i++) {
             let prev = validRows[i-1];
             let curr = validRows[i];
-
             let levelDiff = curr.level - prev.level;
+            
             if (levelDiff <= 0) continue;
 
-            let totalRatio = (curr.c1 / prev.c1).toFixed(2);
-            let perLevelRatio = Math.pow(curr.c1 / prev.c1, 1 / levelDiff).toFixed(3);
-            
-            html += `<li><strong>Lv.${prev.level} → Lv.${curr.level}</strong> (+${levelDiff}레벨 구간): 비용이 <strong>${totalRatio}배</strong> 증가 (레벨당 약 <strong>${perLevelRatio}배</strong> 지수/복리 증가 추정)</li>`;
+            let costRatio = curr.c1 / prev.c1;
+            let perLevelRatio = Math.pow(costRatio, 1 / levelDiff);
+            let costDiff = curr.c1 - prev.c1;
+            let perLevelDiff = costDiff / levelDiff;
+
+            ratios.push(perLevelRatio);
+            diffs.push(perLevelDiff);
+
+            detailsHtml += `<li><strong>Lv.${prev.level} → Lv.${curr.level}</strong> (+${levelDiff}레벨): 비용 ${prev.c1.toLocaleString()} → ${curr.c1.toLocaleString()} (배율: ${costRatio.toFixed(3)}배 / 레벨당 환산 배율: ${perLevelRatio.toFixed(3)}x)</li>`;
         }
-        html += '</ul>';
-        analysisDiv.innerHTML = html;
+        detailsHtml += '</ul>';
+
+        // 규칙성 판정 (지수 모델 vs 선형 모델 편차 비교)
+        // 지수 모델 판정: 레벨당 배율들의 표준편차가 작거나 일정한 경우
+        let avgRatio = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+        let ratioVariance = ratios.reduce((sum, r) => sum + Math.pow(r - avgRatio, 2), 0) / ratios.length;
+        
+        let modelType = "";
+        let formulaStr = "";
+
+        if (ratioVariance < 0.05 || ratios.length === 1) {
+            // 지수(등비/복리) 모델로 판정
+            modelType = "🚀 검증 완료: 지수 (복리/등비) 증가 모델";
+            let baseCost = validRows[0].c1 / Math.pow(avgRatio, validRows[0].level - 1);
+            if (isNaN(baseCost) || !isFinite(baseCost)) baseCost = validRows[0].c1;
+            
+            formulaStr = `Cost(Level) ≈ ${Math.round(baseCost).toLocaleString()} × (${avgRatio.toFixed(3)})^(Level - 1)`;
+        } else {
+            // 선형(등차) 모델 혹은 복합 모델 판정
+            let avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+            modelType = "📈 검증 완료: 선형 (등차) 증가 모델 추정";
+            formulaStr = `Cost(Level) ≈ ${Math.round(avgDiff).toLocaleString()} × Level + (기본 상수)`;
+        }
+
+        container.innerHTML = `
+            <div style="font-weight: bold; color: #2e7d32; margin-bottom: 5px;">${modelType}</div>
+            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">입력된 ${validRows.length개의 검증 포인트를 바탕으로 산출된 유추 계산식:</div>
+            <div class="formula-display">${formulaStr}</div>
+            <div class="verify-details">
+                <strong>[구간별 검증 상세 내역]</strong>
+                ${detailsHtml}
+            </div>
+        `;
     }
 
     // 초기 실행
