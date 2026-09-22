@@ -47,7 +47,7 @@
     <div class="info-box">
         <strong>사용 방법:</strong> 
         1. 상단에서 분석할 <strong>강화 항목</strong>을 선택하세요.<br>
-        2. 최상단 입력 폼에 값을 채우고 **Enter 키** 또는 **[추가 및 정렬]**을 누르면 레벨 순으로 정렬됩니다.<br>
+        2. 최상단 입력 폼에 값을 채운 뒤 **Enter 키**를 누르면 데이터가 자동 저장 및 정렬되며, 커서가 다시 레벨 입력칸으로 이동합니다.<br>
         3. 아래의 **수식 및 규칙성 검증 결과** 박스에서 입력된 데이터를 기반으로 검증된 계산식을 확인할 수 있습니다.
     </div>
 
@@ -84,7 +84,7 @@
         </div>
     </div>
 
-    <!-- ★ 데이터 입력칸 바로 아래에 배치된 규칙성 및 계산식 검증 결과 박스 -->
+    <!-- 데이터 입력칸 바로 아래에 배치된 규칙성 및 계산식 검증 결과 박스 -->
     <div class="verification-box">
         <h3>🔍 입력 데이터 기반 수식 및 규칙성 검증 결과</h3>
         <div id="formulaContainer">
@@ -156,8 +156,10 @@
         
         clearInputs();
         renderTable();
+        document.getElementById('inputLevel').focus();
     }
 
+    // 엔터키 입력 감지 핸들러
     function handleEnter(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -216,6 +218,8 @@
 
         clearInputs();
         renderTable();
+        
+        // ★ 저장 완료 후 레벨 입력칸으로 포커스 강제 이동
         levelInput.focus(); 
     }
 
@@ -257,11 +261,10 @@
             tbody.appendChild(tr);
         });
 
-        // 입력된 데이터를 기반으로 엄격한 검증 및 수식 도출 실행
         verifyAndDeriveFormula(rows);
     }
 
-    // ★ 입력된 데이터를 기반으로 규칙성 검증 및 계산식 유추 함수
+    // 입력된 데이터를 기반으로 규칙성 검증 및 계산식 유추 함수
     function verifyAndDeriveFormula(rows) {
         let validRows = rows.map(r => ({
             level: Number(r.level.replace(/[^0-9]/g, '')),
@@ -277,7 +280,6 @@
             return;
         }
 
-        // 구간별 레벨 당 증가율(배율) 및 증가량 산출
         let ratios = [];
         let diffs = [];
         let detailsHtml = '<ul>';
@@ -301,8 +303,6 @@
         }
         detailsHtml += '</ul>';
 
-        // 규칙성 판정 (지수 모델 vs 선형 모델 편차 비교)
-        // 지수 모델 판정: 레벨당 배율들의 표준편차가 작거나 일정한 경우
         let avgRatio = ratios.reduce((a, b) => a + b, 0) / ratios.length;
         let ratioVariance = ratios.reduce((sum, r) => sum + Math.pow(r - avgRatio, 2), 0) / ratios.length;
         
@@ -310,14 +310,12 @@
         let formulaStr = "";
 
         if (ratioVariance < 0.05 || ratios.length === 1) {
-            // 지수(등비/복리) 모델로 판정
             modelType = "🚀 검증 완료: 지수 (복리/등비) 증가 모델";
             let baseCost = validRows[0].c1 / Math.pow(avgRatio, validRows[0].level - 1);
             if (isNaN(baseCost) || !isFinite(baseCost)) baseCost = validRows[0].c1;
             
             formulaStr = `Cost(Level) ≈ ${Math.round(baseCost).toLocaleString()} × (${avgRatio.toFixed(3)})^(Level - 1)`;
         } else {
-            // 선형(등차) 모델 혹은 복합 모델 판정
             let avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
             modelType = "📈 검증 완료: 선형 (등차) 증가 모델 추정";
             formulaStr = `Cost(Level) ≈ ${Math.round(avgDiff).toLocaleString()} × Level + (기본 상수)`;
@@ -325,7 +323,7 @@
 
         container.innerHTML = `
             <div style="font-weight: bold; color: #2e7d32; margin-bottom: 5px;">${modelType}</div>
-            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">입력된 ${validRows.length개의 검증 포인트를 바탕으로 산출된 유추 계산식:</div>
+            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">입력된 ${validRows.length}개의 검증 포인트를 바탕으로 산출된 유추 계산식:</div>
             <div class="formula-display">${formulaStr}</div>
             <div class="verify-details">
                 <strong>[구간별 검증 상세 내역]</strong>
@@ -337,6 +335,7 @@
     // 초기 실행
     initTabs();
     renderTable();
+    document.getElementById('inputLevel').focus();
 </script>
 
 </body>
