@@ -21,7 +21,7 @@
         .form-grid { display: grid; grid-template-columns: repeat(5, 1fr) 120px; gap: 10px; align-items: end; }
         .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #555; }
         .form-group input { width: 100%; padding: 9px; box-sizing: border-box; text-align: right; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
-        .form-group input:focus { border-color: #3498db; outline: none; }
+        .form-group input:focus { border-color: #3498db; outline: none; box-shadow: 0 0 5px rgba(52, 152, 219, 0.4); }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
@@ -44,7 +44,7 @@
     <div class="info-box">
         <strong>사용 방법:</strong> 
         1. 상단에서 분석할 <strong>강화 항목</strong>을 선택하세요.<br>
-        2. 최상단 입력 폼에 레벨과 데이터를 입력하고 <strong>[추가 및 정렬]</strong>을 누르면 레벨 순으로 자동 정렬되어 리스트에 등록됩니다.
+        2. 최상단 입력 폼에 값을 채운 뒤 **Enter 키**를 누르거나 **[추가 및 정렬]** 버튼을 누르면 자동 저장 및 정렬되며, 커서가 다시 레벨 입력칸으로 이동합니다.
     </div>
 
     <!-- 스탯 선택 탭 -->
@@ -56,23 +56,23 @@
         <div class="form-grid">
             <div class="form-group">
                 <label>레벨 (Level)</label>
-                <input type="text" id="inputLevel" placeholder="예: 1" oninput="formatNumberOnly(this)">
+                <input type="text" id="inputLevel" placeholder="예: 1" oninput="formatNumberOnly(this)" onkeydown="handleEnter(event)">
             </div>
             <div class="form-group">
                 <label>해당 수치</label>
-                <input type="text" id="inputVal" placeholder="수치 입력" oninput="formatNumberOnly(this)">
+                <input type="text" id="inputVal" placeholder="수치 입력" oninput="formatNumberOnly(this)" onkeydown="handleEnter(event)">
             </div>
             <div class="form-group">
                 <label>+1 강화 비용</label>
-                <input type="text" id="inputC1" placeholder="+1 비용" oninput="formatNumberOnly(this)">
+                <input type="text" id="inputC1" placeholder="+1 비용" oninput="formatNumberOnly(this)" onkeydown="handleEnter(event)">
             </div>
             <div class="form-group">
                 <label>+10 강화 비용</label>
-                <input type="text" id="inputC10" placeholder="+10 비용" oninput="formatNumberOnly(this)">
+                <input type="text" id="inputC10" placeholder="+10 비용" oninput="formatNumberOnly(this)" onkeydown="handleEnter(event)">
             </div>
             <div class="form-group">
                 <label>+100 강화 비용</label>
-                <input type="text" id="inputC100" placeholder="+100 비용" oninput="formatNumberOnly(this)">
+                <input type="text" id="inputC100" placeholder="+100 비용" oninput="formatNumberOnly(this)" onkeydown="handleEnter(event)">
             </div>
             <div>
                 <button class="action-btn" onclick="addNewData()">추가 및 정렬</button>
@@ -149,9 +149,16 @@
             b.classList.toggle('active', b.innerText === name);
         });
         
-        // 입력창 초기화
         clearInputs();
         renderTable();
+    }
+
+    // 엔터키 감지 핸들러
+    function handleEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // 기본 폼 제출 동작 방지
+            addNewData();
+        }
     }
 
     // 숫자 입력 시 실시간 콤마 포맷팅
@@ -164,7 +171,7 @@
         }
     }
 
-    // 최상단 입력창 데이터 추가 및 자동 정렬
+    // 최상단 입력창 데이터 추가 및 자동 정렬 + 포커스 이동
     function addNewData() {
         let levelInput = document.getElementById('inputLevel');
         let valInput = document.getElementById('inputVal');
@@ -179,14 +186,15 @@
             return;
         }
 
-        // 중복 레벨 체크 방지 (선택사항이나 덮어쓰기 안내)
         let existingIndex = db[currentStatId].findIndex(r => Number(r.level) === Number(level));
         if (existingIndex !== -1) {
-            if (!confirm(`이미 존재하는 레벨(${level})입니다. 덮어씌우시겠습니까?`)) return;
+            if (!confirm(`이미 존재하는 레벨(${level})입니다. 덮어씌우시겠습니까?`)) {
+                levelInput.focus();
+                return;
+            }
             db[currentStatId].splice(existingIndex, 1);
         }
 
-        // 데이터 객체 생성
         let newData = {
             level: Number(level).toLocaleString(),
             val: valInput.value,
@@ -197,16 +205,17 @@
 
         db[currentStatId].push(newData);
 
-        // ★ 레벨 기준 오름차순 자동 정렬
+        // 레벨 기준 오름차순 자동 정렬
         db[currentStatId].sort((a, b) => {
             let lA = Number(a.level.replace(/[^0-9]/g, ''));
             let lB = Number(b.level.replace(/[^0-9]/g, ''));
             return lA - lB;
         });
 
-        // 입력창 비우기
+        // 입력창 초기화 및 레벨 칸으로 포커스 이동
         clearInputs();
         renderTable();
+        levelInput.focus(); 
     }
 
     function clearInputs() {
@@ -221,6 +230,7 @@
     function deleteRow(index) {
         db[currentStatId].splice(index, 1);
         renderTable();
+        document.getElementById('inputLevel').focus();
     }
 
     // 테이블 렌더링
@@ -254,7 +264,6 @@
     // 수식 및 규칙성 분석 로직
     function analyzeData() {
         let rows = db[currentStatId];
-        // 숫자형 레벨로 정렬된 상태에서 비교
         let validRows = rows.map(r => ({
             level: Number(r.level.replace(/[^0-9]/g, '')),
             c1: Number(r.c1.replace(/[^0-9]/g, ''))
