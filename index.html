@@ -1,1067 +1,1018 @@
 <!DOCTYPE html>
-<html lang="ko" class="dark">
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Formula Lab - 방치형 게임 수치 역공학 & 공식 도출기</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        rpg: {
-                            bg: '#0b0f19',
-                            card: '#151c2e',
-                            border: '#24304f',
-                            accent: '#6366f1',
-                            cyan: '#06b6d4',
-                            emerald: '#10b981',
-                            gold: '#f59e0b'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['Fira Code', 'monospace']
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Custom scrollbar and glassmorphism styling */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0b0f19; }
-        ::-webkit-scrollbar-thumb { background: #24304f; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #374151; }
-        .glass-panel {
-            background: rgba(21, 28, 46, 0.75);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>방치형 RPG 캐릭터 수치 분석 & 자동 검증 시스템</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; }
+    .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+  </style>
 </head>
-<body class="bg-rpg-bg text-slate-200 font-sans min-h-screen flex flex-col antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen custom-scrollbar pb-16">
 
-    <header class="border-b border-rpg-border bg-slate-900/90 sticky top-0 z-40 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
-                        RPG Formula Lab
-                        <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">v1.0 (GitHub Pages)</span>
-                    </h1>
-                    <p class="text-xs text-slate-400">모바일 방치형 RPG 인게임 수치 역공학 & 공식 자율 검증 엔진</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-2">
-                <a href="https://github.com" target="_blank" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition border border-slate-700 flex items-center gap-1.5">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                    GitHub Ready
-                </a>
-            </div>
+  <!-- Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600 rounded-lg text-white font-bold shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-calculator text-xl"></i>
         </div>
-    </header>
+        <div>
+          <h1 class="text-lg font-bold text-white tracking-tight">방치형 RPG 캐릭터 수치 분석기</h1>
+          <p class="text-xs text-slate-400">자동 검증 · 수식 역공학 · 스크린샷 OCR · 자동 저장 시스템</p>
+        </div>
+      </div>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+      <div class="flex items-center space-x-3">
+        <span id="saveStatus" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <i class="fa-solid fa-circle-check text-[10px] mr-1.5 animate-pulse"></i> 로컬 DB 준비 완료
+        </span>
+        <button onclick="openDatabaseModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-database text-indigo-400"></i> 저장 데이터 현황
+        </button>
+        <button onclick="exportAllData()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+          <i class="fa-solid fa-download"></i> 전체 백업 (JSON)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- Category & Stat Selection Banner -->
+    <div class="glass-card rounded-2xl p-5 shadow-xl">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         
-        <!-- Quick Preset Selection Bar -->
-        <div class="mb-6 bg-slate-900/60 rounded-xl p-3 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                    <svg class="w-4 h-4 text-rpg-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    샘플 수치 프리셋:
-                </span>
-            </div>
-            <div class="flex flex-wrap items-center gap-2" id="preset-buttons">
-                <!-- Preset buttons populated by JS -->
-            </div>
+        <!-- Category Selector -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+            <i class="fa-solid fa-layer-group text-indigo-400 mr-1"></i> 캐릭터 성장 카테고리
+          </label>
+          <select id="categorySelect" onchange="onCategoryChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </select>
         </div>
 
-        <!-- Main Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Stat Item Selector -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+            <i class="fa-solid fa-chart-line text-emerald-400 mr-1"></i> 세부 능력치 항목
+          </label>
+          <select id="statSelect" onchange="onStatChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </select>
+        </div>
+
+        <!-- Cost Info Summary Badge -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+            <i class="fa-solid fa-coins text-amber-400 mr-1"></i> 강화 비용/필요 수량 방식
+          </label>
+          <div id="costTypeBadge" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 flex items-center justify-between min-h-[42px]">
+            <span>선택된 카테고리의 비용 규칙 정보</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Main Workspace Split Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Data Input & OCR Extraction -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- OCR Screenshot Tool -->
+        <div class="glass-card rounded-2xl p-5 shadow-xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-camera-retro text-sky-400"></i> 인게임 스크린샷 수치 추출 (OCR)
+            </h2>
+            <span class="text-[11px] text-slate-400">Tesseract.js 엔진</span>
+          </div>
+
+          <!-- Drag and Drop Dropzone -->
+          <div id="dropzone" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-4 text-center cursor-pointer bg-slate-900/50 transition group">
+            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+            <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-500 group-hover:text-indigo-400 transition mb-1"></i>
+            <p class="text-xs text-slate-300 font-medium">게임 스크린샷 클릭 또는 드래그 앤 드롭</p>
+            <p class="text-[10px] text-slate-500 mt-1">강화 화면, 수치 표시 영역 캡처본 인식 지원</p>
+          </div>
+
+          <!-- Image Preview Canvas & OCR Status -->
+          <div id="ocrPreviewContainer" class="hidden mt-3 space-y-3">
+            <div class="relative bg-slate-950 rounded-lg overflow-hidden border border-slate-800 max-h-48 flex justify-center items-center">
+              <img id="ocrPreviewImage" class="max-h-48 object-contain">
+            </div>
             
-            <div class="lg:col-span-5 space-y-6">
-                
-                <!-- Data Entry Card -->
-                <div class="glass-panel rounded-2xl p-5 shadow-xl">
-                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
-                        <div>
-                            <h2 class="text-base font-bold text-white flex items-center gap-2">
-                                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                                1. 인게임 데이터 입력
-                            </h2>
-                            <p class="text-xs text-slate-400 mt-0.5">X(레벨/강화)와 Y(비용/스탯)를 대입하세요</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button id="btn-open-import" class="px-2.5 py-1 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg transition border border-slate-700 flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                CSV/대량 붙여넣기
-                            </button>
-                            <button id="btn-clear-data" class="px-2.5 py-1 text-xs font-medium bg-slate-800 hover:bg-rose-900/40 text-rose-400 hover:text-rose-300 rounded-lg transition border border-slate-700">
-                                초기화
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Options Bar: Math Rounding Options -->
-                    <div class="mb-4 p-3 bg-slate-900/80 rounded-xl border border-slate-800/80 flex items-center justify-between">
-                        <label class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                            기획자 보정 필터:
-                        </label>
-                        <select id="select-rounding" class="bg-slate-800 text-xs text-white border border-slate-700 rounded-lg px-2.5 py-1 focus:ring-1 focus:ring-indigo-500 outline-none">
-                            <option value="none">보정 없음 (연속 수치)</option>
-                            <option value="floor" selected>Math.floor (소수점 내림)</option>
-                            <option value="round">Math.round (소수점 반올림)</option>
-                            <option value="ceil">Math.ceil (소수점 올림)</option>
-                            <option value="floor10">10 단위 내림 (Floor 10)</option>
-                            <option value="floor100">100 단위 내림 (Floor 100)</option>
-                        </select>
-                    </div>
-
-                    <!-- Input Table -->
-                    <div class="max-h-80 overflow-y-auto pr-1">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="text-xs font-semibold text-slate-400 border-b border-slate-800 sticky top-0 bg-slate-900">
-                                    <th class="pb-2 pl-2 w-12">#</th>
-                                    <th class="pb-2 w-5/12">X 축 (레벨/단계)</th>
-                                    <th class="pb-2 w-5/12">Y 축 (인게임 실측값)</th>
-                                    <th class="pb-2 w-10 text-center">삭제</th>
-                                </tr>
-                            </thead>
-                            <tbody id="data-table-body" class="divide-y divide-slate-800/60 text-sm">
-                                <!-- Data rows inserted dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-4 flex items-center justify-between pt-3 border-t border-slate-800">
-                        <button id="btn-add-row" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-medium rounded-xl text-xs transition border border-slate-700/80 flex items-center justify-center gap-1.5 shadow-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                            데이터 행 추가
-                        </button>
-                    </div>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-5 shadow-xl">
-                    <h2 class="text-base font-bold text-white mb-3 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        3. 미래 수치 시뮬레이터 (Predictor)
-                    </h2>
-                    <p class="text-xs text-slate-400 mb-4">도출된 공식으로 초고레벨/최대강화 수치를 즉시 예측합니다.</p>
-
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3">
-                            <div class="relative flex-grow">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-semibold text-slate-400">Target X =</span>
-                                <input type="number" id="predict-x-input" value="100" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-20 pr-3 py-2 text-sm text-cyan-300 font-bold focus:outline-none focus:ring-1 focus:ring-cyan-500">
-                            </div>
-                            <div class="flex gap-1">
-                                <button class="btn-quick-x px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-slate-300 border border-slate-700" data-val="50">50</button>
-                                <button class="btn-quick-x px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-slate-300 border border-slate-700" data-val="100">100</button>
-                                <button class="btn-quick-x px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-slate-300 border border-slate-700" data-val="500">500</button>
-                                <button class="btn-quick-x px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-slate-300 border border-slate-700" data-val="1000">1000</button>
-                            </div>
-                        </div>
-
-                        <div class="p-4 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 rounded-xl border border-indigo-500/20 flex items-center justify-between">
-                            <div>
-                                <div class="text-xs text-indigo-300 font-medium">예상 Y 결과값:</div>
-                                <div id="predict-y-output" class="text-2xl font-extrabold text-white font-mono tracking-tight mt-0.5">0</div>
-                            </div>
-                            <div id="predict-formatted" class="text-right text-xs text-slate-400 font-mono">
-                                (기본 단위 표기)
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="flex gap-2">
+              <button onclick="runOCR()" id="btnRunOCR" class="flex-1 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 텍스트/숫자 자동 인식 실행
+              </button>
             </div>
 
-            <div class="lg:col-span-7 space-y-6">
-                
-                <!-- Model Fitting Summary & Selection -->
-                <div class="glass-panel rounded-2xl p-5 shadow-xl">
-                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
-                        <div>
-                            <h2 class="text-base font-bold text-white flex items-center gap-2">
-                                <svg class="w-5 h-5 text-rpg-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                2. 추론 결과 및 산출식 피팅
-                            </h2>
-                            <p class="text-xs text-slate-400 mt-0.5">데이터 패턴과 가장 부합하는(R² Highest) 공식을 자동 도출했습니다.</p>
-                        </div>
-                        <span id="best-fit-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
-                            적중률 100%
-                        </span>
-                    </div>
-
-                    <!-- Model Candidate Grid -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5" id="model-candidates-grid">
-                        <!-- Model cards inserted by JS -->
-                    </div>
-
-                    <!-- Selected Formula Detail Display -->
-                    <div class="bg-slate-900/90 rounded-xl p-4 border border-indigo-500/30 relative overflow-hidden">
-                        <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                        
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1" id="active-model-title">
-                                지수 성장 공식 (Exponential Growth)
-                            </span>
-                            <div class="flex items-center gap-2">
-                                <button id="btn-copy-math" class="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 flex items-center gap-1 transition">
-                                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                                    수식 복사
-                                </button>
-                                <button id="btn-copy-js" class="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 flex items-center gap-1 transition">
-                                    <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                                    JS 코드 복사
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Mathematical Notation Display -->
-                        <div id="math-formula-display" class="text-lg sm:text-xl font-bold font-mono text-cyan-300 py-2 tracking-wide overflow-x-auto">
-                            y = Math.floor( 100 * Math.pow(1.15, x - 1) )
-                        </div>
-
-                        <!-- JS Function snippet -->
-                        <div class="mt-2 pt-2 border-t border-slate-800/80">
-                            <pre id="js-code-snippet" class="text-xs font-mono text-slate-400 bg-slate-950 p-2.5 rounded-lg overflow-x-auto border border-slate-800/50">
-function calculateY(x) {
-    return Math.floor(100 * Math.pow(1.15, x - 1));
-}</pre>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-5 shadow-xl">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-base font-bold text-white flex items-center gap-2">
-                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
-                            4. 실측 데이터 vs 추론 곡선 시각화
-                        </h2>
-                        <span class="text-xs text-slate-400">점: 입력 실측값 / 선: 산출 공식</span>
-                    </div>
-                    <div class="relative w-full h-64 sm:h-72 bg-slate-900/60 rounded-xl p-2 border border-slate-800">
-                        <canvas id="rpg-chart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-5 shadow-xl">
-                    <h2 class="text-base font-bold text-white mb-3 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-rpg-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        5. 상세 데이터 오차 검증 표 (Verification)
-                    </h2>
-                    <div class="max-h-56 overflow-y-auto">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="text-slate-400 border-b border-slate-800 sticky top-0 bg-slate-900">
-                                    <th class="py-2 pl-2">X (레벨)</th>
-                                    <th class="py-2">실제 Y (인게임)</th>
-                                    <th class="py-2">공식 추론 Y</th>
-                                    <th class="py-2">오차 (Difference)</th>
-                                    <th class="py-2 pr-2 text-right">오차율 (%)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="verification-table-body" class="divide-y divide-slate-800/50 font-mono">
-                                <!-- Populated dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+            <div id="ocrProgress" class="hidden space-y-1">
+              <div class="flex justify-between text-[11px] text-slate-400">
+                <span id="ocrStatusText">인식 처리 중...</span>
+                <span id="ocrPercent">0%</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-1.5">
+                <div id="ocrBar" class="bg-sky-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
             </div>
 
+            <div id="ocrResultBox" class="hidden p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-xs font-mono text-slate-300 max-h-24 overflow-y-auto">
+            </div>
+          </div>
         </div>
-    </main>
 
-    <!-- Modal for CSV / Bulk Import -->
-    <div id="modal-import" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    CSV / TSV / 클립보드 데이터 일괄 입력
-                </h3>
-                <button id="btn-close-modal" class="text-slate-400 hover:text-white text-lg">✕</button>
-            </div>
+        <!-- Data Entry Table -->
+        <div class="glass-card rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
             <div>
-                <p class="text-xs text-slate-400 mb-2">엑셀이나 구글 시트에서 복사한 좌표(X, Y)를 붙여넣으세요. (줄바꿈 및 쉼표/탭 구분 지원)</p>
-                <textarea id="import-textarea" rows="8" placeholder="예시:&#10;1, 100&#10;2, 115&#10;3, 132&#10;4, 152&#10;5, 174" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-500"></textarea>
+              <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-table text-indigo-400"></i> 실시간 데이터 수집 테이블
+              </h2>
+              <p class="text-[11px] text-slate-400 mt-0.5">입력된 수치는 자동으로 저장소에 누적됩니다.</p>
             </div>
-            <div class="flex items-center justify-end gap-2 pt-2">
-                <button id="btn-cancel-import" class="px-4 py-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl">취소</button>
-                <button id="btn-apply-import" class="px-4 py-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30">데이터 파싱 및 적용</button>
+            <div class="flex gap-1.5">
+              <button onclick="addPresetSampleData()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded border border-slate-700 transition" title="샘플 패턴 채우기">
+                <i class="fa-solid fa-vial text-amber-400 mr-1"></i>샘플
+              </button>
+              <button onclick="clearCurrentStatData()" class="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs rounded border border-rose-500/20 transition" title="초기화">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
             </div>
+          </div>
+
+          <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-900/90 text-slate-400 border-b border-slate-800 font-semibold">
+                  <th class="p-2.5 w-16">레벨 ($x$)</th>
+                  <th class="p-2.5">증가값 / 능력치</th>
+                  <th id="costHeader1" class="p-2.5">강화 비용</th>
+                  <th id="costHeader2" class="p-2.5 hidden">+10 비용</th>
+                  <th id="costHeader3" class="p-2.5 hidden">+100 비용</th>
+                  <th class="p-2.5 w-10 text-center">삭제</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-200">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button onclick="addNewRow()" class="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-xs font-semibold rounded-lg border border-indigo-500/30 transition flex items-center gap-1">
+              <i class="fa-solid fa-plus"></i> 행 추가
+            </button>
+            <button onclick="analyzeAndFitFormulas()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-calculator"></i> 수식 연산 및 검증
+            </button>
+          </div>
         </div>
+
+      </div>
+
+      <!-- Right Column: Formulas, Chart & Target Prediction -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Derived Formulas & Verification Card -->
+        <div class="glass-card rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-brain text-purple-400"></i> 자동 도출된 산출식 및 정확도 검증
+            </h2>
+            <span id="accuracyBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+              분석 대기 중
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Stat Formula Card -->
+            <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+                  <i class="fa-solid fa-chart-line mr-1"></i> 능력치/증가값 산출식
+                </span>
+                <span id="statR2" class="text-[11px] font-mono text-slate-400">R² = -</span>
+              </div>
+              <div id="statFormulaText" class="font-mono text-sm text-slate-100 font-bold bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 break-all select-all">
+                y = 데이터 미입력
+              </div>
+              <div id="statFormulaType" class="text-[11px] text-slate-400">
+                유형: -
+              </div>
+            </div>
+
+            <!-- Cost Formula Card -->
+            <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">
+                  <i class="fa-solid fa-coins mr-1"></i> 강화비용/필요수량 산출식
+                </span>
+                <span id="costR2" class="text-[11px] font-mono text-slate-400">R² = -</span>
+              </div>
+              <div id="costFormulaText" class="font-mono text-sm text-slate-100 font-bold bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 break-all select-all">
+                Cost = 데이터 미입력
+              </div>
+              <div id="costFormulaType" class="text-[11px] text-slate-400">
+                유형: -
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Rounding options -->
+          <div class="flex flex-wrap items-center justify-between pt-2 border-t border-slate-800/80 text-xs gap-3">
+            <div class="flex items-center gap-3">
+              <span class="text-slate-400 font-semibold">게임 정수 보정:</span>
+              <label class="inline-flex items-center text-slate-300 gap-1 cursor-pointer">
+                <input type="radio" name="roundMode" value="floor" checked onchange="analyzeAndFitFormulas()" class="text-indigo-600 focus:ring-0"> Math.floor (내림)
+              </label>
+              <label class="inline-flex items-center text-slate-300 gap-1 cursor-pointer">
+                <input type="radio" name="roundMode" value="round" onchange="analyzeAndFitFormulas()" class="text-indigo-600 focus:ring-0"> Math.round (반올림)
+              </label>
+              <label class="inline-flex items-center text-slate-300 gap-1 cursor-pointer">
+                <input type="radio" name="roundMode" value="none" onchange="analyzeAndFitFormulas()" class="text-indigo-600 focus:ring-0"> 보정 없음
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Visualization Card -->
+        <div class="glass-card rounded-2xl p-5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-area text-indigo-400"></i> 수치 모델 비교 그래프 (실제 vs 추론 곡선)
+            </h2>
+            <div class="text-[11px] text-slate-400 flex items-center gap-3">
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> 능력치</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> 강화비용</span>
+            </div>
+          </div>
+
+          <div class="relative h-64 bg-slate-900/60 rounded-xl p-2 border border-slate-800">
+            <canvas id="analysisChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Future Target Level Simulator -->
+        <div class="glass-card rounded-2xl p-5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-forward text-emerald-400"></i> 목표 레벨 수치 예측 시뮬레이터
+            </h2>
+            <span class="text-[11px] text-slate-400">도출된 수식 기반 계산</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+              <div class="text-[11px] text-slate-400 font-semibold mb-1">Lv 100 예측</div>
+              <div id="simLv100" class="font-mono font-bold text-sm text-indigo-300">-</div>
+            </div>
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+              <div class="text-[11px] text-slate-400 font-semibold mb-1">Lv 500 예측</div>
+              <div id="simLv500" class="font-mono font-bold text-sm text-indigo-300">-</div>
+            </div>
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+              <div class="text-[11px] text-slate-400 font-semibold mb-1">Lv 1000 예측</div>
+              <div id="simLv1000" class="font-mono font-bold text-sm text-indigo-300">-</div>
+            </div>
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+              <div class="text-[11px] text-slate-400 font-semibold mb-1">직접 레벨 입력</div>
+              <input type="number" id="customTargetLv" value="2000" oninput="runSimulator()" class="w-full bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-center font-mono text-xs text-emerald-400 focus:outline-none">
+              <div id="simLvCustom" class="font-mono font-bold text-xs text-emerald-300 mt-1">-</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 px-4 py-3 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-2xl border border-indigo-400 opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
-        <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span id="toast-message">클립보드에 복사되었습니다!</span>
+  </main>
+
+  <!-- DB Manager Modal -->
+  <div id="dbModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-3xl rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-database text-indigo-400"></i> 캐릭터 데이터베이스 저장 현황 요약
+        </h3>
+        <button onclick="closeDatabaseModal()" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto custom-scrollbar">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0">
+              <th class="p-2.5">카테고리</th>
+              <th class="p-2.5">능력치 항목</th>
+              <th class="p-2.5 text-center">수집 건수</th>
+              <th class="p-2.5">도출된 수식 ($R^2$)</th>
+              <th class="p-2.5 text-center">동작</th>
+            </tr>
+          </thead>
+          <tbody id="dbTableBody" class="divide-y divide-slate-800/70 font-mono text-slate-300">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-slate-800 text-xs">
+        <div class="flex gap-2">
+          <button onclick="importJSONData()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1">
+            <i class="fa-solid fa-upload"></i> JSON 데이터 불러오기
+          </button>
+          <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="handleJSONImport(event)">
+        </div>
+        <button onclick="closeDatabaseModal()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow">
+          닫기
+        </button>
+      </div>
     </div>
+  </div>
 
-    <script>
-        
-        // --- PRESETS DATA ---
-        const PRESETS = [
-            {
-                name: "지수 성장 (레벨업 비용)",
-                rounding: "floor",
-                data: [
-                    {x: 1, y: 100},
-                    {x: 2, y: 115},
-                    {x: 3, y: 132},
-                    {x: 4, y: 152},
-                    {x: 5, y: 174},
-                    {x: 6, y: 201},
-                    {x: 7, y: 231},
-                    {x: 8, y: 265},
-                    {x: 9, y: 305},
-                    {x: 10, y: 351}
-                ]
-            },
-            {
-                name: "2차 다항식 (공격력 스탯)",
-                rounding: "none",
-                data: [
-                    {x: 1, y: 165},
-                    {x: 2, y: 260},
-                    {x: 3, y: 385},
-                    {x: 4, y: 540},
-                    {x: 5, y: 725},
-                    {x: 6, y: 940},
-                    {x: 7, y: 1185},
-                    {x: 8, y: 1460},
-                    {x: 9, y: 1765},
-                    {x: 10, y: 2100}
-                ]
-            },
-            {
-                name: "멱함수 (장비 강화비용)",
-                rounding: "floor",
-                data: [
-                    {x: 1, y: 50},
-                    {x: 2, y: 282},
-                    {x: 3, y: 779},
-                    {x: 4, y: 1600},
-                    {x: 5, y: 2795},
-                    {x: 6, y: 4409},
-                    {x: 7, y: 6481},
-                    {x: 8, y: 9050},
-                    {x: 9, y: 12150},
-                    {x: 10, y: 15811}
-                ]
-            },
-            {
-                name: "선형 성장 (퀘스트 보상)",
-                rounding: "none",
-                data: [
-                    {x: 1, y: 500},
-                    {x: 2, y: 750},
-                    {x: 3, y: 1000},
-                    {x: 4, y: 1250},
-                    {x: 5, y: 1500},
-                    {x: 6, y: 1750},
-                    {x: 7, y: 2000},
-                    {x: 8, y: 2250},
-                    {x: 9, y: 2500},
-                    {x: 10, y: 2750}
-                ]
-            }
-        ];
+  <script>
+    const CHARACTER_SCHEMAS = {
+      "gold_stat": {
+        name: "골드 스탯",
+        icon: "fa-coins",
+        costs: ["+1 강화비용", "+10 강화비용", "+100 강화비용"],
+        stats: ["공격력", "생명력", "방어력", "관통력", "치명타 확률(%)", "치명타 데미지", "궁극 치명타 확률(%)", "궁극 치명타 데미지"]
+      },
+      "level_stat": {
+        name: "레벨 스탯",
+        icon: "fa-arrow-up-right-dots",
+        costs: ["기본 소모 포인트"],
+        stats: ["공격력", "생명력", "방어력", "관통력", "이동속도 증가(%)", "공격속도 증가(%)", "처치시 체력 회복(%)", "최대 생명력 비례 회복(%)", "회피율(%)"]
+      },
+      "relic_normal": {
+        name: "유물 - 일반",
+        icon: "fa-gem",
+        costs: ["구간별 업당 필요 수량 (0~100렙:1개, 101~200렙:2개...)"],
+        stats: ["유물 공격력(%)", "유물 생명력(%)", "공격속도 증가(%)", "이동속도 증가(%)", "방어력 증폭(%)", "관통력 증폭(%)", "경험치 획득량(%)", "골드 획득량(%)", "아이템 드랍 확률(%)", "최종 공격력(%)", "식재료 드랍 확률(%)"]
+      },
+      "relic_ancient": {
+        name: "유물 - 고대",
+        icon: "fa-scroll",
+        costs: ["구간별 업당 필요 수량 (0~100렙:1개, 101~200렙:2개...)"],
+        stats: ["유물 공격력 증폭(%)", "유물 생명력 증폭(%)", "유물 방어력 증폭(%)", "유물 관통력 증폭(%)", "보스 피해 증폭(%)", "일반 몬스터 피해 증폭(%)", "최종 공격력 증폭(%)", "골드 획득량(%)", "경험치 획득량(%)", "식재료 드랍 확률(%)"]
+      },
+      "relic_primordial": {
+        name: "유물 - 태초",
+        icon: "fa-ankh",
+        costs: ["구간별 업당 필요 수량 (0~100렙:1개, 101~200렙:2개...)"],
+        stats: ["태초 유물 공격력(%)", "태초 유물 생명력(%)", "태초 유물 방어력(%)", "태초 유물 관통력(%)", "태초 피해 증폭(%)", "태초 평타 피해량 증폭(%)", "태초 스킬 피해량 증폭(%)", "태초 보스 피해량 증폭(%)", "태초 일반 피해량 증폭(%)", "최종 골드 획득량(%)"]
+      },
+      "dragon_heart": {
+        name: "드래곤 - 하트",
+        icon: "fa-heart-pulse",
+        costs: ["1회 강화비용"],
+        stats: ["일반 몬스터 피해량(%)", "평타 데미지 증가(%)", "최종 체력(%)", "경험치 획득량(%)", "골드 획득량(%)"]
+      },
+      "dragon_core": {
+        name: "드래곤 - 코어",
+        icon: "fa-atom",
+        costs: ["단계별 강화비용 (1~10단계)"],
+        stats: ["보스 피해 증가(%)", "스킬 데미지 증가(%)", "최종 공격력(%)", "식재료 드랍 확률(%)", "아이템 드랍 확률(%)"]
+      },
+      "dragon_altar": {
+        name: "드래곤 - 재단",
+        icon: "fa-place-of-worship",
+        costs: ["레벨별 필요 수량"],
+        stats: ["제단 공격력(%)", "제단 생명력(%)", "치명타 데미지 증폭(%)", "스킬 데미지 증폭(%)", "최종 골드 획득량(%)"]
+      },
+      "spirit": {
+        name: "정령",
+        icon: "fa-ghost",
+        costs: ["레벨별 필요 수량"],
+        stats: ["정령 공격력(%)", "골드 획득량 (%)", "최종 일반 몬스터 피해 증폭(%)", "최종 보스 몬스터 피해 증폭(%)"]
+      }
+    };
 
-        // --- APP STATE ---
-        let appState = {
-            rows: JSON.parse(JSON.stringify(PRESETS[0].data)),
-            roundingMode: "floor",
-            selectedModelKey: null, // set during render
-            fittedModels: [],
-            chartInstance: null
-        };
+    let currentCategory = "gold_stat";
+    let currentStat = "공격력";
+    let gameDatabase = {};
+    let chartInstance = null;
+    let fittedStatFn = null;
+    let fittedCostFn = null;
 
-        // Utility: Smart rounding to clean numerical precision issues
-        function cleanNum(num, dec = 4) {
-            if (isNaN(num) || !isFinite(num)) return 0;
-            // Check if very close to an integer
-            if (Math.abs(num - Math.round(num)) < 1e-5) return Math.round(num);
-            const factor = Math.pow(10, dec);
-            const rounded = Math.round(num * factor) / factor;
-            return rounded;
+    const STORAGE_KEY = "RPG_STAT_SOLVER_DB_V2";
+
+    function initSystem() {
+      loadFromLocalStorage();
+      populateCategoryDropdown();
+      onCategoryChange();
+      initChart();
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          gameDatabase = JSON.parse(raw);
         }
+      } catch (e) {
+        console.error("Failed to load local storage", e);
+        gameDatabase = {};
+      }
+    }
 
-        // Apply Post-processing filter (Math.floor, round, etc.)
-        function applyRoundingFilter(val, mode) {
-            if (isNaN(val) || !isFinite(val)) return 0;
-            switch(mode) {
-                case 'floor': return Math.floor(val);
-                case 'round': return Math.round(val);
-                case 'ceil': return Math.ceil(val);
-                case 'floor10': return Math.floor(val / 10) * 10;
-                case 'floor100': return Math.floor(val / 100) * 100;
-                case 'none':
-                default:
-                    return val;
-            }
+    function saveToLocalStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(gameDatabase));
+        showSaveStatus("자동 저장 완료", "emerald");
+      } catch (e) {
+        showSaveStatus("저장 실패", "rose");
+      }
+    }
+
+    function showSaveStatus(text, color) {
+      const badge = document.getElementById("saveStatus");
+      if (color === "emerald") {
+        badge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        badge.innerHTML = `<i class="fa-solid fa-circle-check text-[10px] mr-1.5 animate-pulse"></i> ${text}`;
+      } else {
+        badge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+        badge.innerHTML = `<i class="fa-solid fa-circle-exclamation text-[10px] mr-1.5"></i> ${text}`;
+      }
+    }
+
+    function populateCategoryDropdown() {
+      const catSelect = document.getElementById("categorySelect");
+      catSelect.innerHTML = "";
+      Object.keys(CHARACTER_SCHEMAS).forEach(key => {
+        const item = CHARACTER_SCHEMAS[key];
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = `${item.name}`;
+        catSelect.appendChild(opt);
+      });
+    }
+
+    function onCategoryChange() {
+      currentCategory = document.getElementById("categorySelect").value;
+      const schema = CHARACTER_SCHEMAS[currentCategory];
+
+      const statSelect = document.getElementById("statSelect");
+      statSelect.innerHTML = "";
+      schema.stats.forEach(st => {
+        const opt = document.createElement("option");
+        opt.value = st;
+        opt.textContent = st;
+        statSelect.appendChild(opt);
+      });
+
+      updateCostHeaders(schema);
+      currentStat = schema.stats[0];
+      loadTableData();
+    }
+
+    function onStatChange() {
+      currentStat = document.getElementById("statSelect").value;
+      loadTableData();
+    }
+
+    function updateCostHeaders(schema) {
+      const badge = document.getElementById("costTypeBadge");
+      badge.innerHTML = `<span class="font-semibold text-amber-300"><i class="fa-solid ${schema.icon} mr-1"></i> ${schema.costs[0]}</span>`;
+
+      const h1 = document.getElementById("costHeader1");
+      const h2 = document.getElementById("costHeader2");
+      const h3 = document.getElementById("costHeader3");
+
+      h1.textContent = schema.costs[0];
+
+      if (schema.costs.length >= 3) {
+        h2.classList.remove("hidden");
+        h3.classList.remove("hidden");
+        h2.textContent = schema.costs[1];
+        h3.textContent = schema.costs[2];
+      } else {
+        h2.classList.add("hidden");
+        h3.classList.add("hidden");
+      }
+    }
+
+    function getStorageKey() {
+      return `${currentCategory}::${currentStat}`;
+    }
+
+    function loadTableData() {
+      const key = getStorageKey();
+      const rows = gameDatabase[key] || [];
+      
+      const tbody = document.getElementById("dataTableBody");
+      tbody.innerHTML = "";
+
+      if (rows.length === 0) {
+        for (let i = 1; i <= 3; i++) {
+          appendTableRow(i, "", "", "", "");
         }
-
-        // Show Toast Message
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-message');
-            toastMsg.textContent = msg;
-            toast.classList.remove('opacity-0', 'pointer-events-none');
-            toast.classList.add('opacity-100');
-            setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 2500);
-        }
-
-        // Copy text to clipboard via fallback
-        function copyToClipboard(text) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showToast("클립보드에 복사되었습니다!");
-            } catch (err) {
-                showToast("복사 실패");
-            }
-            document.body.removeChild(textArea);
-        }
-
-
-        // Evaluate R² (Coefficient of Determination) and MSE
-        function evaluateModelFit(data, rawPredictFn, roundingMode) {
-            if (data.length === 0) return { r2: 0, mse: Infinity };
-            
-            const n = data.length;
-            let sumY = 0;
-            data.forEach(p => sumY += p.y);
-            const meanY = sumY / n;
-
-            let ssTot = 0;
-            let ssRes = 0;
-
-            data.forEach(p => {
-                const rawY = rawPredictFn(p.x);
-                const predY = applyRoundingFilter(rawY, roundingMode);
-                ssTot += Math.pow(p.y - meanY, 2);
-                ssRes += Math.pow(p.y - predY, 2);
-            });
-
-            const mse = ssRes / n;
-            let r2 = ssTot === 0 ? 1 : 1 - (ssRes / ssTot);
-            if (isNaN(r2) || r2 < 0) r2 = 0;
-            if (r2 > 1) r2 = 1;
-
-            return { r2: cleanNum(r2, 6), mse: cleanNum(mse, 2) };
-        }
-
-        // 1. LINEAR FITTING: y = a*x + b
-        function fitLinear(data, rounding) {
-            const n = data.length;
-            if (n < 2) return null;
-
-            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-            data.forEach(p => {
-                sumX += p.x;
-                sumY += p.y;
-                sumXY += p.x * p.y;
-                sumXX += p.x * p.x;
-            });
-
-            const denom = (n * sumXX - sumX * sumX);
-            if (denom === 0) return null;
-
-            const a = (n * sumXY - sumX * sumY) / denom;
-            const b = (sumY - a * sumX) / n;
-
-            const cleanA = cleanNum(a);
-            const cleanB = cleanNum(b);
-
-            const rawPredict = (x) => cleanA * x + cleanB;
-            const metrics = evaluateModelFit(data, rawPredict, rounding);
-
-            const bSign = cleanB >= 0 ? `+ ${cleanB}` : `- ${Math.abs(cleanB)}`;
-            const roundingPrefix = rounding !== 'none' ? `Math.${rounding}( ` : '';
-            const roundingSuffix = rounding !== 'none' ? ` )` : '';
-
-            return {
-                key: 'linear',
-                name: '선형 성장 (Linear)',
-                formulaStr: `y = ${roundingPrefix}${cleanA} * x ${cleanB !== 0 ? bSign : ''}${roundingSuffix}`,
-                jsCodeStr: `function calculateY(x) {\n    return ${roundingPrefix}${cleanA} * x ${cleanB !== 0 ? bSign : ''}${roundingSuffix};\n}`,
-                predict: (x) => applyRoundingFilter(rawPredict(x), rounding),
-                rawPredict: rawPredict,
-                r2: metrics.r2,
-                mse: metrics.mse
-            };
-        }
-
-        // 2. QUADRATIC FITTING: y = a*x^2 + b*x + c
-        function fitQuadratic(data, rounding) {
-            const n = data.length;
-            if (n < 3) return null;
-
-            let s0 = n, s1 = 0, s2 = 0, s3 = 0, s4 = 0;
-            let sy = 0, sxy = 0, sx2y = 0;
-
-            data.forEach(p => {
-                const x = p.x;
-                const y = p.y;
-                const x2 = x * x;
-                s1 += x;
-                s2 += x2;
-                s3 += x2 * x;
-                s4 += x2 * x2;
-                sy += y;
-                sxy += x * y;
-                sx2y += x2 * y;
-            });
-
-            // Gaussian Elimination for 3x3 matrix
-            const A = [
-                [s4, s3, s2, sx2y],
-                [s3, s2, s1, sxy],
-                [s2, s1, s0, sy]
-            ];
-
-            for (let i = 0; i < 3; i++) {
-                let maxRow = i;
-                for (let k = i + 1; k < 3; k++) {
-                    if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
-                }
-                [A[i], A[maxRow]] = [A[maxRow], A[i]];
-
-                if (Math.abs(A[i][i]) < 1e-12) return null;
-
-                for (let k = i + 1; k < 3; k++) {
-                    const c = -A[k][i] / A[i][i];
-                    for (let j = i; j <= 3; j++) {
-                        if (i === j) A[k][j] = 0;
-                        else A[k][j] += c * A[i][j];
-                    }
-                }
-            }
-
-            const cVal = A[2][3] / A[2][2];
-            const bVal = (A[1][3] - A[1][2] * cVal) / A[1][1];
-            const aVal = (A[0][3] - A[0][2] * cVal - A[0][1] * bVal) / A[0][0];
-
-            const a = cleanNum(aVal);
-            const b = cleanNum(bVal);
-            const c = cleanNum(cVal);
-
-            const rawPredict = (x) => a * x * x + b * x + c;
-            const metrics = evaluateModelFit(data, rawPredict, rounding);
-
-            const bStr = b >= 0 ? `+ ${b}*x` : `- ${Math.abs(b)}*x`;
-            const cStr = c >= 0 ? `+ ${c}` : `- ${Math.abs(c)}`;
-            const roundingPrefix = rounding !== 'none' ? `Math.${rounding}( ` : '';
-            const roundingSuffix = rounding !== 'none' ? ` )` : '';
-
-            return {
-                key: 'quadratic',
-                name: '2차 다항식 (Quadratic)',
-                formulaStr: `y = ${roundingPrefix}${a} * x² ${b !== 0 ? bStr : ''} ${c !== 0 ? cStr : ''}${roundingSuffix}`,
-                jsCodeStr: `function calculateY(x) {\n    return ${roundingPrefix}${a} * Math.pow(x, 2) ${b !== 0 ? bStr : ''} ${c !== 0 ? cStr : ''}${roundingSuffix};\n}`,
-                predict: (x) => applyRoundingFilter(rawPredict(x), rounding),
-                rawPredict: rawPredict,
-                r2: metrics.r2,
-                mse: metrics.mse
-            };
-        }
-
-        // 3. EXPONENTIAL FITTING: y = A * B^(x - 1) or y = A * B^x
-        function fitExponential(data, rounding) {
-            const validData = data.filter(p => p.y > 0);
-            if (validData.length < 2) return null;
-
-            // Transform Y to ln(Y) for linear regression with shift offset x - x_min
-            const x0 = validData[0].x;
-            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-            const n = validData.length;
-
-            validData.forEach(p => {
-                const xShift = p.x - x0;
-                const logY = Math.log(p.y);
-                sumX += xShift;
-                sumY += logY;
-                sumXY += xShift * logY;
-                sumXX += xShift * xShift;
-            });
-
-            const denom = (n * sumXX - sumX * sumX);
-            if (denom === 0) return null;
-
-            const slope = (n * sumXY - sumX * sumY) / denom;
-            const intercept = (sumY - slope * sumX) / n;
-
-            const baseB = cleanNum(Math.exp(slope), 5);
-            const baseA = cleanNum(Math.exp(intercept), 4);
-
-            const xOffsetStr = x0 === 1 ? 'x - 1' : x0 === 0 ? 'x' : `x - ${x0}`;
-            const rawPredict = (x) => baseA * Math.pow(baseB, x - x0);
-            const metrics = evaluateModelFit(data, rawPredict, rounding);
-
-            const roundingPrefix = rounding !== 'none' ? `Math.${rounding}( ` : '';
-            const roundingSuffix = rounding !== 'none' ? ` )` : '';
-
-            return {
-                key: 'exponential',
-                name: '지수 성장 (Exponential)',
-                formulaStr: `y = ${roundingPrefix}${baseA} * (${baseB} ^ (${xOffsetStr}))${roundingSuffix}`,
-                jsCodeStr: `function calculateY(x) {\n    return ${roundingPrefix}${baseA} * Math.pow(${baseB}, ${xOffsetStr})${roundingSuffix};\n}`,
-                predict: (x) => applyRoundingFilter(rawPredict(x), rounding),
-                rawPredict: rawPredict,
-                r2: metrics.r2,
-                mse: metrics.mse
-            };
-        }
-
-        // 4. POWER LAW FITTING: y = A * x^B
-        function fitPower(data, rounding) {
-            const validData = data.filter(p => p.x > 0 && p.y > 0);
-            if (validData.length < 2) return null;
-
-            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-            const n = validData.length;
-
-            validData.forEach(p => {
-                const logX = Math.log(p.x);
-                const logY = Math.log(p.y);
-                sumX += logX;
-                sumY += logY;
-                sumXY += logX * logY;
-                sumXX += logX * logX;
-            });
-
-            const denom = (n * sumXX - sumX * sumX);
-            if (denom === 0) return null;
-
-            const bExponent = (n * sumXY - sumX * sumY) / denom;
-            const aIntercept = (sumY - bExponent * sumX) / n;
-
-            const cleanA = cleanNum(Math.exp(aIntercept), 4);
-            const cleanB = cleanNum(bExponent, 4);
-
-            const rawPredict = (x) => x > 0 ? cleanA * Math.pow(x, cleanB) : 0;
-            const metrics = evaluateModelFit(data, rawPredict, rounding);
-
-            const roundingPrefix = rounding !== 'none' ? `Math.${rounding}( ` : '';
-            const roundingSuffix = rounding !== 'none' ? ` )` : '';
-
-            return {
-                key: 'power',
-                name: '멱함수 성장 (Power Law)',
-                formulaStr: `y = ${roundingPrefix}${cleanA} * (x ^ ${cleanB})${roundingSuffix}`,
-                jsCodeStr: `function calculateY(x) {\n    return ${roundingPrefix}${cleanA} * Math.pow(x, ${cleanB})${roundingSuffix};\n}`,
-                predict: (x) => applyRoundingFilter(rawPredict(x), rounding),
-                rawPredict: rawPredict,
-                r2: metrics.r2,
-                mse: metrics.mse
-            };
-        }
-
-
-        // Render Data Table
-        function renderDataTable() {
-            const tbody = document.getElementById('data-table-body');
-            tbody.innerHTML = '';
-
-            appState.rows.forEach((row, idx) => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/40 transition";
-                tr.innerHTML = `
-                    <td class="py-1.5 pl-2 text-slate-500 font-mono text-xs">${idx + 1}</td>
-                    <td class="py-1.5 pr-2">
-                        <input type="number" data-idx="${idx}" data-field="x" value="${row.x}" class="input-cell w-full bg-slate-900 border border-slate-700/80 rounded px-2 py-1 text-xs text-white focus:border-indigo-500 focus:outline-none font-mono">
-                    </td>
-                    <td class="py-1.5 pr-2">
-                        <input type="number" data-idx="${idx}" data-field="y" value="${row.y}" class="input-cell w-full bg-slate-900 border border-slate-700/80 rounded px-2 py-1 text-xs text-cyan-300 font-bold focus:border-indigo-500 focus:outline-none font-mono">
-                    </td>
-                    <td class="py-1.5 text-center">
-                        <button data-idx="${idx}" class="btn-delete-row text-slate-500 hover:text-rose-400 p-1 rounded transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // Re-attach input event listeners
-            document.querySelectorAll('.input-cell').forEach(input => {
-                input.addEventListener('change', (e) => {
-                    const idx = parseInt(e.target.getAttribute('data-idx'));
-                    const field = e.target.getAttribute('data-field');
-                    const val = parseFloat(e.target.value) || 0;
-                    appState.rows[idx][field] = val;
-                    recalculateAndRender();
-                });
-            });
-
-            document.querySelectorAll('.btn-delete-row').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
-                    if (appState.rows.length <= 2) {
-                        showToast("최소 2개 이상의 데이터 포인트가 필요합니다.");
-                        return;
-                    }
-                    appState.rows.splice(idx, 1);
-                    renderDataTable();
-                    recalculateAndRender();
-                });
-            });
-        }
-
-        // Render Preset Buttons
-        function renderPresets() {
-            const container = document.getElementById('preset-buttons');
-            container.innerHTML = '';
-            PRESETS.forEach(p => {
-                const btn = document.createElement('button');
-                btn.className = "px-2.5 py-1 text-xs rounded-lg bg-slate-800 hover:bg-indigo-600/30 text-indigo-300 border border-slate-700/80 transition flex items-center gap-1 font-medium";
-                btn.textContent = p.name;
-                btn.addEventListener('click', () => {
-                    appState.rows = JSON.parse(JSON.stringify(p.data));
-                    appState.roundingMode = p.rounding;
-                    document.getElementById('select-rounding').value = p.rounding;
-                    renderDataTable();
-                    recalculateAndRender();
-                    showToast(`'${p.name}' 프리셋 로드 완료`);
-                });
-                container.appendChild(btn);
-            });
-        }
-
-        // Recalculate Models and Update UI
-        function recalculateAndRender() {
-            // Sort rows by X ascending
-            appState.rows.sort((a, b) => a.x - b.x);
-
-            const models = [
-                fitExponential(appState.rows, appState.roundingMode),
-                fitQuadratic(appState.rows, appState.roundingMode),
-                fitLinear(appState.rows, appState.roundingMode),
-                fitPower(appState.rows, appState.roundingMode)
-            ].filter(m => m !== null);
-
-            // Sort models by highest R2 score first
-            models.sort((a, b) => b.r2 - a.r2);
-
-            appState.fittedModels = models;
-
-            if (models.length === 0) return;
-
-            // If no model selected or previously selected is gone, default to best model
-            if (!appState.selectedModelKey || !models.find(m => m.key === appState.selectedModelKey)) {
-                appState.selectedModelKey = models[0].key;
-            }
-
-            renderModelCards();
-            renderSelectedFormulaDetails();
-            renderChart();
-            renderVerificationTable();
-            updatePredictionOutput();
-        }
-
-        // Render Candidate Model Cards
-        function renderModelCards() {
-            const grid = document.getElementById('model-candidates-grid');
-            grid.innerHTML = '';
-
-            const bestModel = appState.fittedModels[0];
-
-            appState.fittedModels.forEach(m => {
-                const isSelected = m.key === appState.selectedModelKey;
-                const isBest = m.key === bestModel.key;
-
-                const card = document.createElement('div');
-                card.className = `p-3 rounded-xl cursor-pointer transition border relative overflow-hidden ${
-                    isSelected 
-                        ? 'bg-indigo-900/40 border-indigo-500 shadow-md shadow-indigo-500/10' 
-                        : 'bg-slate-900/70 hover:bg-slate-800/80 border-slate-800'
-                }`;
-
-                card.innerHTML = `
-                    ${isBest ? '<div class="absolute top-0 right-0 w-3 h-3 bg-emerald-400 rounded-bl-full"></div>' : ''}
-                    <div class="text-xs font-semibold text-slate-300 truncate">${m.name.split(' ')[0]}</div>
-                    <div class="text-xs text-slate-500 mt-0.5">R² Score</div>
-                    <div class="text-base font-extrabold font-mono mt-0.5 ${m.r2 > 0.98 ? 'text-emerald-400' : m.r2 > 0.9 ? 'text-cyan-400' : 'text-amber-400'}">
-                        ${(m.r2 * 100).toFixed(2)}%
-                    </div>
-                `;
-
-                card.addEventListener('click', () => {
-                    appState.selectedModelKey = m.key;
-                    renderModelCards();
-                    renderSelectedFormulaDetails();
-                    renderChart();
-                    renderVerificationTable();
-                    updatePredictionOutput();
-                });
-
-                grid.appendChild(card);
-            });
-
-            // Update best fit badge text
-            const badge = document.getElementById('best-fit-badge');
-            badge.textContent = `최적 모델: ${bestModel.name.split(' ')[0]} (R²: ${(bestModel.r2 * 100).toFixed(2)}%)`;
-        }
-
-        // Render Formula & JS Code Box
-        function renderSelectedFormulaDetails() {
-            const activeModel = appState.fittedModels.find(m => m.key === appState.selectedModelKey) || appState.fittedModels[0];
-            if (!activeModel) return;
-
-            document.getElementById('active-model-title').textContent = activeModel.name;
-            document.getElementById('math-formula-display').textContent = activeModel.formulaStr;
-            document.getElementById('js-code-snippet').textContent = activeModel.jsCodeStr;
-        }
-
-
-        function renderChart() {
-            const ctx = document.getElementById('rpg-chart').getContext('2d');
-            const activeModel = appState.fittedModels.find(m => m.key === appState.selectedModelKey);
-
-            if (appState.chartInstance) {
-                appState.chartInstance.destroy();
-            }
-
-            // Scatter points (Actual Data)
-            const scatterData = appState.rows.map(r => ({ x: r.x, y: r.y }));
-
-            // Continuous line generator (Predicted curve)
-            const lineData = [];
-            if (activeModel && appState.rows.length > 0) {
-                const minX = Math.min(...appState.rows.map(r => r.x));
-                const maxX = Math.max(...appState.rows.map(r => r.x));
-                const step = Math.max(0.1, (maxX - minX) / 50);
-
-                for (let x = minX; x <= maxX; x += step) {
-                    lineData.push({
-                        x: cleanNum(x, 2),
-                        y: activeModel.predict(x)
-                    });
-                }
-            }
-
-            appState.chartInstance = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [
-                        {
-                            label: '인게임 실측 수치 (Actual)',
-                            data: scatterData,
-                            backgroundColor: '#06b6d4',
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
-                            order: 1
-                        },
-                        {
-                            label: `추론 공식 곡선 (${activeModel ? activeModel.name.split(' ')[0] : ''})`,
-                            data: lineData,
-                            type: 'line',
-                            borderColor: '#818cf8',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            fill: false,
-                            tension: 0.2,
-                            order: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: { color: '#94a3b8', font: { size: 11 } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` (X: ${context.parsed.x}, Y: ${context.parsed.y.toLocaleString()})`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            position: 'bottom',
-                            grid: { color: '#1e293b' },
-                            ticks: { color: '#64748b', font: { size: 10 } }
-                        },
-                        y: {
-                            grid: { color: '#1e293b' },
-                            ticks: { color: '#64748b', font: { size: 10 } }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Render Verification Error Table
-        function renderVerificationTable() {
-            const tbody = document.getElementById('verification-table-body');
-            tbody.innerHTML = '';
-
-            const activeModel = appState.fittedModels.find(m => m.key === appState.selectedModelKey);
-            if (!activeModel) return;
-
-            appState.rows.forEach(r => {
-                const predY = activeModel.predict(r.x);
-                const diff = predY - r.y;
-                const errPct = r.y !== 0 ? Math.abs(diff / r.y) * 100 : 0;
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/40 transition border-b border-slate-800/30";
-                tr.innerHTML = `
-                    <td class="py-1.5 pl-2 text-slate-300">${r.x}</td>
-                    <td class="py-1.5 font-bold text-cyan-300">${r.y.toLocaleString()}</td>
-                    <td class="py-1.5 text-indigo-300">${predY.toLocaleString()}</td>
-                    <td class="py-1.5 ${diff === 0 ? 'text-slate-500' : diff > 0 ? 'text-amber-400' : 'text-rose-400'}">
-                        ${diff > 0 ? '+' + diff.toLocaleString() : diff.toLocaleString()}
-                    </td>
-                    <td class="py-1.5 pr-2 text-right">
-                        <span class="px-1.5 py-0.5 rounded text-[10px] ${
-                            errPct === 0 ? 'bg-emerald-500/20 text-emerald-300' : errPct < 1 ? 'bg-cyan-500/20 text-cyan-300' : 'bg-rose-500/20 text-rose-300'
-                        }">
-                            ${errPct.toFixed(2)}%
-                        </span>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Update Future Predictor Output
-        function updatePredictionOutput() {
-            const targetX = parseFloat(document.getElementById('predict-x-input').value) || 0;
-            const activeModel = appState.fittedModels.find(m => m.key === appState.selectedModelKey);
-            
-            if (!activeModel) return;
-
-            const predictedY = activeModel.predict(targetX);
-            document.getElementById('predict-y-output').textContent = predictedY.toLocaleString();
-
-            // Large number shorthand (K, M, B, T)
-            let formatted = "";
-            if (predictedY >= 1e12) formatted = `(${(predictedY / 1e12).toFixed(2)} 조 / T)`;
-            else if (predictedY >= 1e8) formatted = `(${(predictedY / 1e8).toFixed(2)} 억 / B)`;
-            else if (predictedY >= 1e4) formatted = `(${(predictedY / 1e4).toFixed(2)} 만 / K)`;
-            else formatted = `(${predictedY.toLocaleString()})`;
-
-            document.getElementById('predict-formatted').textContent = formatted;
-        }
-
-
-        document.addEventListener('DOMContentLoaded', () => {
-            renderPresets();
-            renderDataTable();
-            recalculateAndRender();
-
-            // Add Row
-            document.getElementById('btn-add-row').addEventListener('click', () => {
-                const lastX = appState.rows.length > 0 ? appState.rows[appState.rows.length - 1].x + 1 : 1;
-                appState.rows.push({ x: lastX, y: 0 });
-                renderDataTable();
-                recalculateAndRender();
-            });
-
-            // Clear Data
-            document.getElementById('btn-clear-data').addEventListener('click', () => {
-                appState.rows = [
-                    { x: 1, y: 100 },
-                    { x: 2, y: 200 }
-                ];
-                renderDataTable();
-                recalculateAndRender();
-                showToast("데이터 테이블이 초기화되었습니다.");
-            });
-
-            // Rounding Mode Changed
-            document.getElementById('select-rounding').addEventListener('change', (e) => {
-                appState.roundingMode = e.target.value;
-                recalculateAndRender();
-            });
-
-            // Copy buttons
-            document.getElementById('btn-copy-math').addEventListener('click', () => {
-                const activeModel = appState.fittedModels.find(m => m.key === appState.selectedModelKey);
-                if (activeModel) copyToClipboard(activeModel.formulaStr);
-            });
-
-            document.getElementById('btn-copy-js').addEventListener('click', () => {
-                const activeModel = appState.fittedModels.find(m => m.key === appState.selectedModelKey);
-                if (activeModel) copyToClipboard(activeModel.jsCodeStr);
-            });
-
-            // Predictor Inputs
-            document.getElementById('predict-x-input').addEventListener('input', updatePredictionOutput);
-
-            document.querySelectorAll('.btn-quick-x').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const val = e.target.getAttribute('data-val');
-                    document.getElementById('predict-x-input').value = val;
-                    updatePredictionOutput();
-                });
-            });
-
-            // Modal Handlers
-            const modal = document.getElementById('modal-import');
-            document.getElementById('btn-open-import').addEventListener('click', () => modal.classList.remove('hidden'));
-            document.getElementById('btn-close-modal').addEventListener('click', () => modal.classList.add('hidden'));
-            document.getElementById('btn-cancel-import').addEventListener('click', () => modal.classList.add('hidden'));
-
-            // Bulk CSV / TSV Import Handler
-            document.getElementById('btn-apply-import').addEventListener('click', () => {
-                const rawText = document.getElementById('import-textarea').value.trim();
-                if (!rawText) {
-                    modal.classList.add('hidden');
-                    return;
-                }
-
-                const lines = rawText.split('\n');
-                const parsed = [];
-
-                lines.forEach(line => {
-                    const parts = line.split(/[\t,;\s]+/).map(p => parseFloat(p.trim())).filter(p => !isNaN(p));
-                    if (parts.length >= 2) {
-                        parsed.push({ x: parts[0], y: parts[1] });
-                    }
-                });
-
-                if (parsed.length >= 2) {
-                    appState.rows = parsed;
-                    renderDataTable();
-                    recalculateAndRender();
-                    showToast(`${parsed.length}개의 데이터 행 파싱 완료`);
-                } else {
-                    showToast("유효한 X, Y 데이터 쌍을 찾지 못했습니다.");
-                }
-                modal.classList.add('hidden');
-            });
+      } else {
+        rows.forEach(r => {
+          appendTableRow(r.level, r.statVal, r.cost1 || "", r.cost2 || "", r.cost3 || "");
         });
-    </script>
+      }
+
+      analyzeAndFitFormulas();
+    }
+
+    function appendTableRow(level = "", statVal = "", cost1 = "", cost2 = "", cost3 = "") {
+      const schema = CHARACTER_SCHEMAS[currentCategory];
+      const tbody = document.getElementById("dataTableBody");
+      const tr = document.createElement("tr");
+
+      const multiCost = schema.costs.length >= 3;
+
+      tr.innerHTML = `
+        <td class="p-1.5"><input type="number" class="row-level w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 focus:outline-none focus:border-indigo-500" value="${level}" oninput="onTableInputChanged()"></td>
+        <td class="p-1.5"><input type="number" step="any" class="row-stat w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 focus:outline-none focus:border-emerald-500" value="${statVal}" oninput="onTableInputChanged()"></td>
+        <td class="p-1.5"><input type="number" step="any" class="row-cost1 w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 focus:outline-none focus:border-amber-500" value="${cost1}" oninput="onTableInputChanged()"></td>
+        <td class="p-1.5 ${multiCost ? '' : 'hidden'}"><input type="number" step="any" class="row-cost2 w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 focus:outline-none focus:border-amber-500" value="${cost2}" oninput="onTableInputChanged()"></td>
+        <td class="p-1.5 ${multiCost ? '' : 'hidden'}"><input type="number" step="any" class="row-cost3 w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 focus:outline-none focus:border-amber-500" value="${cost3}" oninput="onTableInputChanged()"></td>
+        <td class="p-1.5 text-center"><button onclick="deleteRow(this)" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-xmark"></i></button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function addNewRow() {
+      const rows = document.querySelectorAll("#dataTableBody tr");
+      let nextLv = 1;
+      if (rows.length > 0) {
+        const lastLvInput = rows[rows.length - 1].querySelector(".row-level");
+        const val = parseFloat(lastLvInput.value);
+        if (!isNaN(val)) nextLv = val + 1;
+      }
+      appendTableRow(nextLv, "", "", "", "");
+    }
+
+    function deleteRow(btn) {
+      const tr = btn.closest("tr");
+      tr.remove();
+      onTableInputChanged();
+    }
+
+    function clearCurrentStatData() {
+      if (confirm(`'${CHARACTER_SCHEMAS[currentCategory].name} - ${currentStat}' 데이터를 삭제하시겠습니까?`)) {
+        const key = getStorageKey();
+        delete gameDatabase[key];
+        saveToLocalStorage();
+        loadTableData();
+      }
+    }
+
+    function onTableInputChanged() {
+      saveCurrentTableToState();
+      analyzeAndFitFormulas();
+    }
+
+    function saveCurrentTableToState() {
+      const rows = document.querySelectorAll("#dataTableBody tr");
+      const dataArr = [];
+
+      rows.forEach(tr => {
+        const lv = parseFloat(tr.querySelector(".row-level")?.value);
+        const st = parseFloat(tr.querySelector(".row-stat")?.value);
+        const c1 = parseFloat(tr.querySelector(".row-cost1")?.value);
+        const c2 = parseFloat(tr.querySelector(".row-cost2")?.value);
+        const c3 = parseFloat(tr.querySelector(".row-cost3")?.value);
+
+        if (!isNaN(lv) && (!isNaN(st) || !isNaN(c1))) {
+          dataArr.push({
+            level: lv,
+            statVal: isNaN(st) ? null : st,
+            cost1: isNaN(c1) ? null : c1,
+            cost2: isNaN(c2) ? null : c2,
+            cost3: isNaN(c3) ? null : c3
+          });
+        }
+      });
+
+      const key = getStorageKey();
+      gameDatabase[key] = dataArr;
+      saveToLocalStorage();
+    }
+
+    function addPresetSampleData() {
+      const samples = [
+        { level: 1, statVal: 100, cost1: 10 },
+        { level: 2, statVal: 115, cost1: 12 },
+        { level: 3, statVal: 132, cost1: 15 },
+        { level: 4, statVal: 152, cost1: 18 },
+        { level: 5, statVal: 175, cost1: 22 },
+        { level: 6, statVal: 201, cost1: 27 },
+        { level: 7, statVal: 231, cost1: 33 },
+        { level: 8, statVal: 266, cost1: 40 }
+      ];
+
+      const key = getStorageKey();
+      gameDatabase[key] = samples;
+      saveToLocalStorage();
+      loadTableData();
+    }
+
+    function fitDataModels(pts) {
+      if (pts.length < 2) return null;
+
+      const results = [];
+
+      let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+      let n = pts.length;
+      pts.forEach(p => {
+        sumX += p.x;
+        sumY += p.y;
+        sumXY += p.x * p.y;
+        sumXX += p.x * p.x;
+      });
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX || 1);
+      const intercept = (sumY - slope * sumX) / n;
+
+      const linPredict = (x) => slope * x + intercept;
+      const linR2 = calculateR2(pts, linPredict);
+      results.push({
+        type: "선형 성장 (Linear)",
+        formula: `y = ${cleanNum(slope)} * x ${intercept >= 0 ? '+' : '-'} ${cleanNum(Math.abs(intercept))}`,
+        predict: linPredict,
+        r2: linR2
+      });
+
+      const validExp = pts.every(p => p.y > 0);
+      if (validExp) {
+        let sumLnY = 0, sumXLnY = 0;
+        pts.forEach(p => {
+          const lnY = Math.log(p.y);
+          sumLnY += lnY;
+          sumXLnY += p.x * lnY;
+        });
+        const bLn = (n * sumXLnY - sumX * sumLnY) / (n * sumXX - sumX * sumX || 1);
+        const aLn = (sumLnY - bLn * sumX) / n;
+        const A = Math.exp(aLn);
+        const B = Math.exp(bLn);
+
+        const expPredict = (x) => A * Math.pow(B, x);
+        const expR2 = calculateR2(pts, expPredict);
+        results.push({
+          type: "지수 성장 (Exponential)",
+          formula: `y = ${cleanNum(A)} * (${cleanNum(B, 4)})^x`,
+          predict: expPredict,
+          r2: expR2
+        });
+      }
+
+      if (n >= 3) {
+        const A = (pts[pts.length - 1].y - pts[0].y) / (Math.pow(pts[pts.length - 1].x, 2) - Math.pow(pts[0].x, 2) || 1);
+        const C = pts[0].y - A * Math.pow(pts[0].x, 2);
+        const quadPredict = (x) => A * x * x + C;
+        const quadR2 = calculateR2(pts, quadPredict);
+        results.push({
+          type: "2차 다항식 (Quadratic)",
+          formula: `y = ${cleanNum(A)} * x² + ${cleanNum(C)}`,
+          predict: quadPredict,
+          r2: quadR2
+        });
+      }
+
+      results.sort((a, b) => b.r2 - a.r2);
+      return results[0];
+    }
+
+    function calculateR2(pts, predictFn) {
+      const meanY = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+      let ssTot = 0, ssRes = 0;
+      pts.forEach(p => {
+        const pred = predictFn(p.x);
+        ssTot += Math.pow(p.y - meanY, 2);
+        ssRes += Math.pow(p.y - pred, 2);
+      });
+      if (ssTot === 0) return 1;
+      const r2 = 1 - (ssRes / ssTot);
+      return Math.max(0, Math.min(1, r2));
+    }
+
+    function cleanNum(num, digits = 3) {
+      if (isNaN(num)) return 0;
+      return Math.round(num * Math.pow(10, digits)) / Math.pow(10, digits);
+    }
+
+    function getSelectedRoundMode() {
+      const radios = document.getElementsByName("roundMode");
+      for (const r of radios) {
+        if (r.checked) return r.value;
+      }
+      return "floor";
+    }
+
+    function analyzeAndFitFormulas() {
+      const key = getStorageKey();
+      const data = gameDatabase[key] || [];
+
+      const statPoints = [];
+      const costPoints = [];
+
+      data.forEach(d => {
+        if (d.level != null) {
+          if (d.statVal != null) statPoints.push({ x: d.level, y: d.statVal });
+          if (d.cost1 != null) costPoints.push({ x: d.level, y: d.cost1 });
+        }
+      });
+
+      const roundMode = getSelectedRoundMode();
+
+      const statBest = fitDataModels(statPoints);
+      if (statBest) {
+        fittedStatFn = (x) => {
+          let raw = statBest.predict(x);
+          if (roundMode === "floor") return Math.floor(raw);
+          if (roundMode === "round") return Math.round(raw);
+          return raw;
+        };
+        document.getElementById("statFormulaText").textContent = statBest.formula;
+        document.getElementById("statFormulaType").textContent = `유형: ${statBest.type}`;
+        document.getElementById("statR2").textContent = `R² = ${cleanNum(statBest.r2, 4)}`;
+      } else {
+        fittedStatFn = null;
+        document.getElementById("statFormulaText").textContent = "데이터 부족 (최소 2개 필요)";
+        document.getElementById("statFormulaType").textContent = "유형: -";
+        document.getElementById("statR2").textContent = "R² = -";
+      }
+
+      const costBest = fitDataModels(costPoints);
+      if (costBest) {
+        fittedCostFn = (x) => {
+          let raw = costBest.predict(x);
+          if (roundMode === "floor") return Math.floor(raw);
+          if (roundMode === "round") return Math.round(raw);
+          return raw;
+        };
+        document.getElementById("costFormulaText").textContent = costBest.formula;
+        document.getElementById("costFormulaType").textContent = `유형: ${costBest.type}`;
+        document.getElementById("costR2").textContent = `R² = ${cleanNum(costBest.r2, 4)}`;
+      } else {
+        fittedCostFn = null;
+        document.getElementById("costFormulaText").textContent = "데이터 부족 (최소 2개 필요)";
+        document.getElementById("costFormulaType").textContent = "유형: -";
+        document.getElementById("costR2").textContent = "R² = -";
+      }
+
+      const accBadge = document.getElementById("accuracyBadge");
+      if (statBest && costBest) {
+        const avgR2 = (statBest.r2 + costBest.r2) / 2;
+        accBadge.textContent = `적합도 ${cleanNum(avgR2 * 100, 1)}%`;
+        accBadge.className = "text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium";
+      } else {
+        accBadge.textContent = "분석 대기 중";
+        accBadge.className = "text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
+      }
+
+      updateChart(statPoints, costPoints);
+      runSimulator();
+    }
+
+    function initChart() {
+      const ctx = document.getElementById("analysisChart").getContext("2d");
+      chartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          datasets: [
+            { label: "실제 능력치", data: [], borderColor: "#10b981", backgroundColor: "#10b981", showLine: false, pointRadius: 6, yAxisID: "y" },
+            { label: "추론 능력치 곡선", data: [], borderColor: "#34d399", borderDash: [5, 5], fill: false, pointRadius: 0, yAxisID: "y" },
+            { label: "실제 강화비용", data: [], borderColor: "#f59e0b", backgroundColor: "#f59e0b", showLine: false, pointRadius: 6, yAxisID: "y1" },
+            { label: "추론 강화비용 곡선", data: [], borderColor: "#fbbf24", borderDash: [5, 5], fill: false, pointRadius: 0, yAxisID: "y1" }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { type: "linear", title: { display: true, text: "레벨 (x)", color: "#94a3b8" }, grid: { color: "#334155" }, ticks: { color: "#94a3b8" } },
+            y: { type: "linear", display: true, position: "left", title: { display: true, text: "능력치", color: "#10b981" }, grid: { color: "#1e293b" }, ticks: { color: "#10b981" } },
+            y1: { type: "linear", display: true, position: "right", title: { display: true, text: "강화비용", color: "#f59e0b" }, grid: { drawOnChartArea: false }, ticks: { color: "#f59e0b" } }
+          },
+          plugins: { legend: { labels: { color: "#cbd5e1", font: { size: 11 } } } }
+        }
+      });
+    }
+
+    function updateChart(statPoints, costPoints) {
+      if (!chartInstance) return;
+
+      chartInstance.data.datasets[0].data = statPoints;
+      chartInstance.data.datasets[2].data = costPoints;
+
+      const statCurve = [];
+      const costCurve = [];
+
+      let minX = 1, maxX = 10;
+      const allX = [...statPoints.map(p => p.x), ...costPoints.map(p => p.x)];
+      if (allX.length > 0) {
+        minX = Math.min(...allX);
+        maxX = Math.max(...allX);
+      }
+
+      const step = Math.max(1, (maxX - minX) / 20);
+
+      for (let x = minX; x <= maxX; x += step) {
+        if (fittedStatFn) statCurve.push({ x: x, y: fittedStatFn(x) });
+        if (fittedCostFn) costCurve.push({ x: x, y: fittedCostFn(x) });
+      }
+
+      chartInstance.data.datasets[1].data = statCurve;
+      chartInstance.data.datasets[3].data = costCurve;
+
+      chartInstance.update();
+    }
+
+    function runSimulator() {
+      const sim100 = document.getElementById("simLv100");
+      const sim500 = document.getElementById("simLv500");
+      const sim1000 = document.getElementById("simLv1000");
+      const simCustom = document.getElementById("simLvCustom");
+
+      const customLv = parseFloat(document.getElementById("customTargetLv").value) || 2000;
+
+      sim100.innerHTML = formatSimValue(100);
+      sim500.innerHTML = formatSimValue(500);
+      sim1000.innerHTML = formatSimValue(1000);
+      simCustom.innerHTML = formatSimValue(customLv);
+    }
+
+    function formatSimValue(lv) {
+      let statTxt = "-";
+      let costTxt = "-";
+
+      if (fittedStatFn) statTxt = cleanNum(fittedStatFn(lv)).toLocaleString();
+      if (fittedCostFn) costTxt = cleanNum(fittedCostFn(lv)).toLocaleString();
+
+      return `<div class="text-xs font-bold text-emerald-400">스탯: ${statTxt}</div><div class="text-[10px] text-amber-400">비용: ${costTxt}</div>`;
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const previewImg = document.getElementById("ocrPreviewImage");
+        previewImg.src = event.target.result;
+        document.getElementById("ocrPreviewContainer").classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function runOCR() {
+      const img = document.getElementById("ocrPreviewImage");
+      if (!img.src) return;
+
+      const progBox = document.getElementById("ocrProgress");
+      const progBar = document.getElementById("ocrBar");
+      const progText = document.getElementById("ocrStatusText");
+      const progPercent = document.getElementById("ocrPercent");
+      const resultBox = document.getElementById("ocrResultBox");
+
+      progBox.classList.remove("hidden");
+      resultBox.classList.add("hidden");
+
+      try {
+        const worker = await Tesseract.createWorker("kor+eng", 1, {
+          logger: m => {
+            if (m.status === "recognizing text") {
+              const p = Math.round((m.progress || 0) * 100);
+              progBar.style.width = p + "%";
+              progPercent.textContent = p + "%";
+              progText.textContent = "문자/숫자 인식 분석 중...";
+            }
+          }
+        });
+
+        const ret = await worker.recognize(img.src);
+        await worker.terminate();
+
+        const text = ret.data.text;
+        progBox.classList.add("hidden");
+        resultBox.classList.remove("hidden");
+
+        const numbers = text.match(/\d+([.,]\d+)?/g) || [];
+
+        resultBox.innerHTML = `
+          <div class="text-[11px] font-bold text-sky-400 mb-1"><i class="fa-solid fa-list-check mr-1"></i> 추출된 숫자 후보 (클릭하여 테이블에 추가):</div>
+          <div class="flex flex-wrap gap-1.5">
+            ${numbers.map(n => `<button onclick="insertOCRNumber('${n}')" class="px-2 py-0.5 bg-slate-800 hover:bg-sky-600 text-sky-300 hover:text-white rounded border border-slate-700 font-mono transition text-xs">${n}</button>`).join('')}
+          </div>
+        `;
+      } catch (err) {
+        alert("OCR 인식 중 오류 발생: " + err.message);
+        progBox.classList.add("hidden");
+      }
+    }
+
+    function insertOCRNumber(numStr) {
+      const val = parseFloat(numStr.replace(/,/g, ''));
+      if (isNaN(val)) return;
+
+      const rows = document.querySelectorAll("#dataTableBody tr");
+      let nextLv = 1;
+      if (rows.length > 0) {
+        const lastLvInput = rows[rows.length - 1].querySelector(".row-level");
+        const lvVal = parseFloat(lastLvInput.value);
+        if (!isNaN(lvVal)) nextLv = lvVal + 1;
+      }
+      appendTableRow(nextLv, val, "", "", "");
+      onTableInputChanged();
+    }
+
+    function openDatabaseModal() {
+      const modal = document.getElementById("dbModal");
+      const tbody = document.getElementById("dbTableBody");
+      tbody.innerHTML = "";
+
+      Object.keys(CHARACTER_SCHEMAS).forEach(catKey => {
+        const catSchema = CHARACTER_SCHEMAS[catKey];
+        catSchema.stats.forEach(stKey => {
+          const dbKey = `${catKey}::${stKey}`;
+          const records = gameDatabase[dbKey] || [];
+          const count = records.length;
+
+          const tr = document.createElement("tr");
+          tr.className = count > 0 ? "bg-slate-900/40" : "opacity-50";
+
+          tr.innerHTML = `
+            <td class="p-2.5 font-medium text-slate-200">${catSchema.name}</td>
+            <td class="p-2.5 text-indigo-300">${stKey}</td>
+            <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full ${count > 0 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-800 text-slate-500'}">${count}건</span></td>
+            <td class="p-2.5 text-slate-400 text-[11px]">${count >= 2 ? '수식 계산됨' : '데이터 미입력'}</td>
+            <td class="p-2.5 text-center">
+              <button onclick="selectCategoryAndStat('${catKey}', '${stKey}')" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[11px]">
+                이동
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+
+      modal.classList.remove("hidden");
+    }
+
+    function closeDatabaseModal() {
+      document.getElementById("dbModal").classList.add("hidden");
+    }
+
+    function selectCategoryAndStat(catKey, stKey) {
+      document.getElementById("categorySelect").value = catKey;
+      onCategoryChange();
+      document.getElementById("statSelect").value = stKey;
+      onStatChange();
+      closeDatabaseModal();
+    }
+
+    function exportAllData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gameDatabase, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Idle_RPG_Character_Database_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importJSONData() {
+      document.getElementById("jsonFileInput").click();
+    }
+
+    function handleJSONImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const imported = JSON.parse(evt.target.result);
+          gameDatabase = { ...gameDatabase, ...imported };
+          saveToLocalStorage();
+          loadTableData();
+          alert("데이터베이스가 성공적으로 동기화되었습니다!");
+          openDatabaseModal();
+        } catch (err) {
+          alert("유효한 JSON 파일이 아닙니다.");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.addEventListener("DOMContentLoaded", initSystem);
+  </script>
 </body>
 </html>
